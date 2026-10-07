@@ -1,4 +1,4 @@
-<x-guest-layout :title="'Lupa Password - SIDAK BKSDA Sulawesi Tengah'">
+<x-guest-layout :title="'Lupa Password - SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah'">
 
     <span class="auth-badge"><span class="dot"></span> RESET PASSWORD</span>
     <h1>Lupa <em>password?</em></h1>

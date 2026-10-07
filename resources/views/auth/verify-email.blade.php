@@ -1,4 +1,4 @@
-<x-guest-layout :title="'Verifikasi Email - SIDAK BKSDA Sulawesi Tengah'">
+<x-guest-layout :title="'Verifikasi Email - SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah'">
 
     <span class="auth-badge"><span class="dot"></span> SATU LANGKAH LAGI</span>
     <h1>Verifikasi <em>email</em></h1>

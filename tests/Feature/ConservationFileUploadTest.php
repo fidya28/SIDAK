@@ -63,6 +63,19 @@ class ConservationFileUploadTest extends TestCase
         $this->assertStringContainsString('Dokumen Perizinan C04: dokumen_perizinan/', $record->keterangan);
         $storedPath = substr($record->keterangan, strpos($record->keterangan, 'Dokumen Perizinan C04: ') + strlen('Dokumen Perizinan C04: '));
         Storage::disk('public')->assertExists($storedPath);
+
+        $fileUrl = route('konservasi.file', ['id' => $record->id, 'path' => $storedPath]);
+        $this->actingAs($user)
+            ->get($fileUrl)
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/pdf')
+            ->assertHeader('Content-Disposition', 'inline; filename=' . basename($storedPath))
+            ->assertStreamedContent("%PDF-1.4\nDokumen izin uji\n%%EOF");
+
+        $otherUser = User::factory()->create(['email_verified_at' => now()]);
+        $this->actingAs($otherUser)
+            ->get($fileUrl)
+            ->assertNotFound();
     }
 
     public function test_c04_oversized_document_gets_a_clear_file_size_message(): void

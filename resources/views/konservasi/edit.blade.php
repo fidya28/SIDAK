@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Data Konservasi - SIDAK BKSDA</title>
+    <title>SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah - Edit Data</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -14,11 +14,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="{{ route('konservasi.dashboard') }}" class="flex items-center gap-3">
                 <div class="w-11 h-11 rounded-xl bg-emerald-700/10 border border-emerald-700/20 flex items-center justify-center p-1.5 shadow-xs overflow-hidden">
-                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SIDAK" class="w-full h-full object-contain">
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SINTUVU" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-bold text-sm text-slate-900 leading-tight">SIDAK BKSDA SULTENG</span>
-                    <span class="text-[11px] text-slate-500 font-medium">Sistem Input data konservasi</span>
+                    <span class="font-bold text-sm text-slate-900 leading-tight">SINTUVU</span>
+                    <span class="text-[11px] text-slate-500 font-medium">BKSDA Sulawesi Tengah</span>
                 </div>
             </a>
             <nav class="hidden md:flex items-center space-x-1 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200">
@@ -36,6 +36,13 @@
                     <p class="text-[10px] text-slate-500">{{ Auth::user()->role ?? 'Operator' }}</p>
                 </div>
             </div>
+            <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                @csrf
+                <button type="submit" title="Keluar dari akun" aria-label="Keluar dari akun" class="inline-flex h-9 w-9 xl:w-auto items-center justify-center gap-2 rounded-lg border border-rose-200 bg-white px-2.5 text-rose-700 transition hover:bg-rose-50">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                    <span class="hidden xl:inline text-xs font-semibold">Keluar</span>
+                </button>
+            </form>
         </div>
     </header>
 
@@ -123,18 +130,11 @@
                                 'masyarakat_hukum_adat_b02' => ['ya' => 'Ya', 'tidak' => 'Tidak/Bukan'],
                                 'sumber_dana' => ['APBN KLHK Lainnya' => 'APBN KLHK Lainnya', 'APBN KSDAE' => 'APBN KSDAE', 'Pendanaan Pihak Lainnya' => 'Pendanaan Pihak Lainnya', 'Pendanaan Gabungan' => 'Pendanaan Gabungan'],
                             ];
-<<<<<<< HEAD
-                            $editDateFields = ['sk_parsial_tanggal', 'sk_provinsi_tanggal', 'sk_penetapan_tanggal', 'sk_rpjp_tanggal_pengesahan', 'sk_rpjp_periode_berakhir', 'tanggal_batb', 'tanggal_pelaksanaan_evaluasi', 'tanggal_sk_zonasi'];
-                            $editNumberFields = ['sk_parsial_luas', 'sk_provinsi_luas', 'sk_penetapan_luas', 'pal_baik', 'pal_rusak', 'pal_hilang', 'pal_total', 'panjang_pal_km', 'jumlah_laki', 'jumlah_perempuan', 'jumlah_bantuan'];
-                            $editTextareaFields = ['rekomendasi_evaluasi', 'tindak_lanjut_evaluasi'];
-                            $editFileFields = ['sk_parsial_file', 'sk_provinsi_file', 'sk_penetapan_file', 'shapefile_zip', 'sk_rpjp_file', 'dokumen_batb', 'shapefile_monitoring_zip', 'file_dokumen_evaluasi', 'shapefile_ekosistem_zip', 'file_sk_zonasi', 'shapefile_zonasi_zip', 'dokumen_d03', 'shapefile_d03', 'foto_odtwa', 'dokumen_perizinan_pbp_d06', 'shapefile_pbp_d06', 'foto_sarana_prasarana_d07', 'shapefile_d10', 'dokumen_sk_d11', 'shapefile_d11', 'dokumen_perizinan_d14', 'shapefile_d14', 'dokumen_perizinan_c02', 'dokumen_perizinan_c04', 'dokumen_perizinan_c06'];
-                            $editImageFields = ['foto_odtwa', 'foto_sarana_prasarana_d07'];
-=======
                             $editDateFields = ['sk_parsial_tanggal', 'sk_provinsi_tanggal', 'sk_penetapan_tanggal', 'sk_rpjp_tanggal_pengesahan', 'sk_rpjp_periode_berakhir', 'tanggal_batb', 'tanggal_pelaksanaan_evaluasi', 'tanggal_sk_zonasi', 'tanggal_mulai_ks_b02', 'tanggal_akhir_pks_b02'];
                             $editNumberFields = ['sk_parsial_luas', 'sk_provinsi_luas', 'sk_penetapan_luas', 'pal_baik', 'pal_rusak', 'pal_hilang', 'pal_total', 'panjang_pal_km', 'jumlah_laki', 'jumlah_perempuan', 'jumlah_bantuan', 'jumlah_laki_b02', 'jumlah_perempuan_b02', 'luas_area_b02'];
                             $editTextareaFields = ['rekomendasi_evaluasi', 'tindak_lanjut_evaluasi', 'jenis_dimanfaatkan_b02'];
-                            $editFileFields = ['sk_parsial_file', 'sk_provinsi_file', 'sk_penetapan_file', 'shapefile_zip', 'sk_rpjp_file', 'dokumen_batb', 'shapefile_monitoring_zip', 'file_dokumen_evaluasi', 'shapefile_ekosistem_zip', 'file_sk_zonasi', 'shapefile_zonasi_zip', 'dokumen_kerjasama_b02', 'shapefile_kerjasama_b02'];
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
+                            $editFileFields = ['sk_parsial_file', 'sk_provinsi_file', 'sk_penetapan_file', 'shapefile_zip', 'sk_rpjp_file', 'dokumen_batb', 'shapefile_monitoring_zip', 'file_dokumen_evaluasi', 'shapefile_ekosistem_zip', 'file_sk_zonasi', 'shapefile_zonasi_zip', 'dokumen_d03', 'shapefile_d03', 'foto_odtwa', 'dokumen_perizinan_pbp_d06', 'shapefile_pbp_d06', 'foto_sarana_prasarana_d07', 'shapefile_d10', 'dokumen_sk_d11', 'shapefile_d11', 'dokumen_perizinan_d14', 'shapefile_d14', 'dokumen_perizinan_c02', 'dokumen_perizinan_c04', 'dokumen_perizinan_c06', 'dokumen_kerjasama_b02', 'shapefile_kerjasama_b02'];
+                            $editImageFields = ['foto_odtwa', 'foto_sarana_prasarana_d07'];
                             $editCheckboxFields = ['hhbk_nihil', 'pertanian_nihil', 'perkebunan_nihil', 'peternakan_nihil', 'perikanan_nihil', 'wisata_nihil', 'produk_nihil', 'pembibitan_nihil', 'lainnya_nihil'];
                         @endphp
 

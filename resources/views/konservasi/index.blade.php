@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rekapitulasi Data - SIDAK BKSDA Sulawesi Tengah</title>
+    <title>SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah - Rekapitulasi Data</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -53,11 +53,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-11 h-11 rounded-xl bg-forest-700/10 border border-forest-700/20 flex items-center justify-center p-1.5 shadow-xs overflow-hidden">
-                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SIDAK" class="w-full h-full object-contain">
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SINTUVU" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-bold text-sm tracking-tight text-slate-900 leading-tight">SIDAK BKSDA SULTENG</span>
-                    <span class="text-[11px] text-slate-500 font-medium">Sistem Input data konservasi</span>
+                    <span class="font-bold text-sm tracking-tight text-slate-900 leading-tight">SINTUVU</span>
+                    <span class="text-[11px] text-slate-500 font-medium">BKSDA Sulawesi Tengah</span>
                 </div>
             </div>
             <nav class="hidden md:flex items-center space-x-1 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200">
@@ -72,6 +72,13 @@
                     <div class="w-9 h-9 rounded-full bg-forest-700 text-white flex items-center justify-center font-bold text-xs shadow-sm uppercase">{{ strtoupper(substr(Auth::user()->name ?? 'User', 0, 2)) }}</div>
                     <div class="hidden sm:block text-left"><p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name ?? 'Pengguna' }}</p><p class="text-[10px] text-slate-500">{{ Auth::user()->role ?? 'Operator' }}</p></div>
                 </div>
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                    @csrf
+                    <button type="submit" title="Keluar dari akun" aria-label="Keluar dari akun" class="inline-flex h-9 w-9 xl:w-auto items-center justify-center gap-2 rounded-lg border border-rose-200 bg-white px-2.5 text-rose-700 transition hover:bg-rose-50">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                        <span class="hidden xl:inline text-xs font-semibold">Keluar</span>
+                    </button>
+                </form>
             </div>
         </div>
     </header>
@@ -117,7 +124,7 @@
             </div>
 
             <form action="{{ route('rekap.index') }}" method="GET" id="filterForm">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     
                     <!-- 1. Dropdown Bidang Utama -->
                     <div>
@@ -149,6 +156,11 @@
                         </select>
                     </div>
 
+                    <div>
+                        <label for="search" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Kata Kunci</label>
+                        <input type="search" id="search" name="search" value="{{ request('search') }}" placeholder="Bidang, sub-bidang, tahun, atau detail data" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:bg-white transition shadow-xs">
+                    </div>
+
                     <!-- Tombol Tampilkan -->
                     <div class="flex items-end">
                         <button type="submit" class="w-full bg-forest-700 hover:bg-forest-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-xs transition flex items-center justify-center gap-2 h-[40px]">
@@ -159,6 +171,72 @@
                 </div>
             </form>
         </div>
+
+        @if(request()->filled('search') && !$selectedSub)
+            <section class="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+                <div class="flex flex-col gap-1 border-b border-slate-200/80 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-900">Hasil Pencarian</h3>
+                        <p class="text-xs text-slate-500">Kata kunci: <strong>{{ request('search') }}</strong></p>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-500">{{ $data->total() }} data ditemukan</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-xs">
+                        <thead class="bg-slate-50 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                            <tr>
+                                <th class="px-4 py-3">Bidang</th>
+                                <th class="px-4 py-3">Sub-bidang</th>
+                                <th class="px-4 py-3">Tahun</th>
+                                <th class="px-4 py-3">Jumlah</th>
+                                <th class="min-w-72 px-4 py-3">Rincian Data</th>
+                                <th class="px-4 py-3">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            @forelse($data as $item)
+                                <tr class="align-top hover:bg-slate-50/70">
+                                    <td class="whitespace-nowrap px-4 py-4">{{ $item->subBidang->bidang->nama_bidang ?? '-' }}</td>
+                                    <td class="min-w-56 px-4 py-4">
+                                        <strong class="block text-slate-900">{{ $item->subBidang->kode_sub ?? '' }}</strong>
+                                        {{ $item->subBidang->nama_sub_bidang ?? '-' }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4">{{ $item->tahun }}</td>
+                                    <td class="whitespace-nowrap px-4 py-4">{{ $item->jumlah ?? '-' }}</td>
+                                    <td class="max-w-xl px-4 py-4">
+                                        <dl class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                                            @foreach(explode(' | ', (string) $item->keterangan) as $detailLine)
+                                                @php
+                                                    $separator = strpos($detailLine, ': ');
+                                                    $detailLabel = $separator === false ? null : trim(substr($detailLine, 0, $separator));
+                                                    $detailValue = $separator === false ? trim($detailLine) : trim(substr($detailLine, $separator + 2));
+                                                @endphp
+                                                @if($detailValue !== '')
+                                                    <div class="break-words rounded-lg bg-slate-50 px-2.5 py-1.5">
+                                                        @if($detailLabel)<dt class="font-semibold text-slate-500">{{ $detailLabel }}</dt>@endif
+                                                        <dd class="m-0 text-slate-800">{{ $detailValue }}</dd>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </dl>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-4">
+                                        <a href="{{ route('rekap.index', ['sub_bidang' => $item->subBidang->kode_sub]) }}" class="font-semibold text-emerald-700 hover:underline">Buka sub-bidang</a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-4 py-12 text-center text-sm font-semibold text-slate-500">Tidak ada data yang cocok dengan kata kunci dan filter yang dipilih.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if(method_exists($data, 'links'))
+                    <div class="border-t border-slate-200/80 bg-slate-50/50 p-4">{{ $data->links() }}</div>
+                @endif
+            </section>
+        @endif
 
         @if($selectedSub)
         <!-- DATA SUB-BIDANG TERPILIH -->
@@ -171,27 +249,7 @@
                     <p class="text-xs text-slate-500 mt-0.5">Data untuk sub-bidang yang dipilih</p>
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-center gap-3">
-                    <!-- Form Pencarian Teks -->
-                    <form action="{{ route('rekap.index') }}" method="GET" class="flex items-center gap-2 w-full sm:w-auto">
-                        @if(request('bidang')) <input type="hidden" name="bidang" value="{{ request('bidang') }}"> @endif
-                        @if(request('sub_bidang')) <input type="hidden" name="sub_bidang" value="{{ request('sub_bidang') }}"> @endif
-                        
-                        <div class="relative w-full sm:w-64">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                            </span>
-                            <input type="text" 
-                                   name="search" 
-                                   value="{{ request('search') }}" 
-                                   placeholder="Cari kata kunci..." 
-                                   class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-forest-600 focus:bg-white transition shadow-xs">
-                        </div>
-                        <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xs transition">
-                            Cari
-                        </button>
-                    </form>
-
+                <div class="flex items-center gap-2">
                     <!-- Tombol Unduh PDF & Excel -->
                     @if($selectedSub)
                     <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -291,18 +349,18 @@
                                     <td class="py-4 px-4 border-l border-slate-100">{{ $detailFields['sk parsial nomor'] ?? $detailFields['sk parsial no'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $detailFields['sk parsial tanggal'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ isset($detailFields['sk parsial luas']) ? $detailFields['sk parsial luas'] . ' Ha' : '-' }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['sk parsial file']))<a href="{{ asset('storage/' . $detailFields['sk parsial file']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['sk parsial file']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['sk parsial file']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
                                     <td class="py-4 px-4 border-l border-slate-100">{{ $provinceStatus }}</td>
                                     <td class="py-4 px-4">{{ $detailFields['sk provinsi nomor'] ?? $detailFields['sk provinsi no'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $detailFields['sk provinsi tanggal'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ isset($detailFields['sk provinsi luas']) ? $detailFields['sk provinsi luas'] . ' Ha' : '-' }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['sk provinsi file']))<a href="{{ asset('storage/' . $detailFields['sk provinsi file']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['sk provinsi file']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['sk provinsi file']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
                                     <td class="py-4 px-4 border-l border-slate-100">{{ $appointmentStatus }}</td>
                                     <td class="py-4 px-4">{{ $detailFields['sk penetapan nomor'] ?? $detailFields['sk penetapan no'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $detailFields['sk penetapan tanggal'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ isset($detailFields['sk penetapan luas']) ? $detailFields['sk penetapan luas'] . ' Ha' : '-' }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['sk penetapan file']))<a href="{{ asset('storage/' . $detailFields['sk penetapan file']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
-                                    <td class="py-4 px-4 border-l border-slate-100">@if(!empty($detailFields['shapefile zip']))<a href="{{ asset('storage/' . $detailFields['shapefile zip']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['sk penetapan file']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['sk penetapan file']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
+                                    <td class="py-4 px-4 border-l border-slate-100">@if(!empty($detailFields['shapefile zip']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['shapefile zip']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
                                     <td class="py-4 px-4 min-w-48">{{ $detailFields['keterangan'] ?? $detailFields['keterangan tambahan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         <div class="flex items-center justify-center gap-2">
@@ -382,7 +440,7 @@
                                     <td class="py-4 px-4 border-l border-slate-100">{{ $detailFields['sk rpjp nomor'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $detailFields['sk rpjp tanggal pengesahan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $detailFields['sk rpjp periode berakhir'] ?? '-' }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['sk rpjp file']))<a href="{{ asset('storage/' . $detailFields['sk rpjp file']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['sk rpjp file']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['sk rpjp file']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file</a>@else-@endif</td>
                                     <td class="py-4 px-4 border-l border-slate-100 min-w-48">{{ $detailFields['keterangan'] ?? $detailFields['keterangan tambahan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         <div class="flex items-center justify-center gap-2">
@@ -483,8 +541,8 @@
                                     <td class="py-4 px-4">{{ $detailFields['pal hilang'] ?? '-' }}</td>
                                     <td class="py-4 px-4">{{ $totalPal ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ isset($detailFields['panjang pal km']) ? $detailFields['panjang pal km'] . ' Km' : '-' }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['dokumen batb']))<a href="{{ asset('storage/' . $detailFields['dokumen batb']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat dokumen</a>@else-@endif</td>
-                                    <td class="py-4 px-4 border-l border-slate-100">@if(!empty($detailFields['shapefile monitoring zip']))<a href="{{ asset('storage/' . $detailFields['shapefile monitoring zip']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['dokumen batb']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['dokumen batb']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat dokumen</a>@else-@endif</td>
+                                    <td class="py-4 px-4 border-l border-slate-100">@if(!empty($detailFields['shapefile monitoring zip']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['shapefile monitoring zip']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
                                     <td class="py-4 px-4 min-w-48">{{ $detailFields['keterangan'] ?? $detailFields['keterangan tambahan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         <div class="flex items-center justify-center gap-2">
@@ -562,7 +620,7 @@
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $detailFields['tanggal pelaksanaan evaluasi'] ?? $detailFields['[evaluasi] tgl pelaksanaan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 min-w-64">{{ $detailFields['rekomendasi evaluasi'] ?? $detailFields['rekomendasi'] ?? '-' }}</td>
                                     <td class="py-4 px-4 min-w-64">{{ $detailFields['tindak lanjut evaluasi'] ?? $detailFields['tindak lanjut'] ?? '-' }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['file dokumen evaluasi']))<a href="{{ asset('storage/' . $detailFields['file dokumen evaluasi']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat dokumen</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['file dokumen evaluasi']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['file dokumen evaluasi']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat dokumen</a>@else-@endif</td>
                                     <td class="py-4 px-4 min-w-48">{{ $detailFields['keterangan'] ?? $detailFields['keterangan tambahan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         <div class="flex items-center justify-center gap-2">
@@ -631,7 +689,7 @@
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $item->tahun }}</td>
                                     <td class="py-4 px-4 min-w-56">{{ $detailFields['kawasan konservasi'] ?? $detailFields['kawasan ekosistem'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $availability }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['shapefile ekosistem zip']))<a href="{{ asset('storage/' . $detailFields['shapefile ekosistem zip']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['shapefile ekosistem zip']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['shapefile ekosistem zip']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
                                     <td class="py-4 px-4 min-w-48">{{ $detailFields['keterangan'] ?? $detailFields['keterangan tambahan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         <div class="flex items-center justify-center gap-2">
@@ -709,8 +767,8 @@
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $zoningStatus }}</td>
                                     <td class="py-4 px-4">{{ $detailFields['nomor sk zonasi'] ?? '-' }}</td>
                                     <td class="py-4 px-4 whitespace-nowrap">{{ $detailFields['tanggal sk zonasi'] ?? '-' }}</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['file sk zonasi']))<a href="{{ asset('storage/' . $detailFields['file sk zonasi']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file SK</a>@else-@endif</td>
-                                    <td class="py-4 px-4">@if(!empty($detailFields['shapefile zonasi zip']))<a href="{{ asset('storage/' . $detailFields['shapefile zonasi zip']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['file sk zonasi']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['file sk zonasi']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat file SK</a>@else-@endif</td>
+                                    <td class="py-4 px-4">@if(!empty($detailFields['shapefile zonasi zip']))<a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['shapefile zonasi zip']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>@else-@endif</td>
                                     <td class="py-4 px-4 min-w-48">{{ $detailFields['keterangan'] ?? $detailFields['keterangan tambahan'] ?? '-' }}</td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
                                         <div class="flex items-center justify-center gap-2">
@@ -819,12 +877,12 @@
                                     <td class="py-4 px-4">{{ $detailFields['zona/blok'] ?? '-' }}</td>
                                     <td class="py-4 px-4">
                                         @if(!empty($detailFields['dokumen kerjasama b02']))
-                                            <a href="{{ asset('storage/' . $detailFields['dokumen kerjasama b02']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat dokumen</a>
+                                            <a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['dokumen kerjasama b02']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat dokumen</a>
                                         @else - @endif
                                     </td>
                                     <td class="py-4 px-4">
                                         @if(!empty($detailFields['shapefile kerjasama b02']))
-                                            <a href="{{ asset('storage/' . $detailFields['shapefile kerjasama b02']) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>
+                                            <a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => $detailFields['shapefile kerjasama b02']]) }}" target="_blank" class="font-semibold text-emerald-700 hover:underline">Lihat shapefile</a>
                                         @else - @endif
                                     </td>
                                     <td class="py-4 px-4 text-center whitespace-nowrap">
@@ -912,7 +970,7 @@
                                                             @php
                                                                 $fileType = strtoupper(pathinfo($uploadPath, PATHINFO_EXTENSION));
                                                             @endphp
-                                                            <a href="{{ asset('storage/' . ltrim($uploadPath, '/')) }}" target="_blank" rel="noopener noreferrer" title="{{ basename($uploadPath) }}" class="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline">
+                                                            <a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => ltrim($uploadPath, '/')]) }}" target="_blank" rel="noopener noreferrer" title="{{ basename($uploadPath) }}" class="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline">
                                                                 <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Lihat {{ $fileType }}
                                                             </a>
                                                         @endforeach
@@ -1033,7 +1091,7 @@
                                                                             @php
                                                                                 $fileType = strtoupper(pathinfo($uploadPath, PATHINFO_EXTENSION));
                                                                             @endphp
-                                                                            <a href="{{ asset('storage/' . ltrim($uploadPath, '/')) }}" target="_blank" rel="noopener noreferrer" title="{{ basename($uploadPath) }}" class="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline">
+                                                                            <a href="{{ route('konservasi.file', ['id' => $item->id, 'path' => ltrim($uploadPath, '/')]) }}" target="_blank" rel="noopener noreferrer" title="{{ basename($uploadPath) }}" class="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline">
                                                                                 <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i> Lihat {{ $fileType }}
                                                                             </a>
                                                                         @endforeach

@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Data Konservasi SIDAK BKSDA</title>
+    <title>Laporan Data Konservasi SINTUVU - Sulawesi Tengah</title>
     <style>
         body {
             font-family: sans-serif;
@@ -62,7 +62,7 @@
 <body>
 
     <div class="header">
-        <h2>Sistem Informasi Data Konservasi (SIDAK)</h2>
+        <h2>SINTUVU - Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah</h2>
         <p>Balai Konservasi Sumber Daya Alam (BKSDA) - Rekapitulasi Data Terintegrasi</p>
     </div>
 

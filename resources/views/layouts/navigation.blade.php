@@ -3,12 +3,12 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex items-center gap-8">
-                <!-- Logo SIDAK BKSDA -->
+                <!-- Logo SINTUVU BKSDA -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ Route::has('konservasi.dashboard') ? route('konservasi.dashboard') : '#' }}" class="flex items-center gap-3">
                         <img src="{{ asset('images/logo-bksda.jpeg') }}" alt="Logo BKSDA" class="h-9 w-auto object-contain rounded-md" onerror="this.src='https://via.placeholder.com/40?text=BKSDA'">
                         <div class="hidden md:block">
-                            <span class="font-extrabold text-sm text-slate-800 tracking-wide block leading-none">SIDAK BKSDA</span>
+                            <span class="font-extrabold text-sm text-slate-800 tracking-wide block leading-none">SINTUVU</span>
                             <span class="text-[10px] font-bold text-emerald-700 tracking-wider">SULAWESI TENGAH</span>
                         </div>
                     </a>

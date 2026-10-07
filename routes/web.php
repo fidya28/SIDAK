@@ -4,12 +4,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\KonservasiController;
 use App\Http\Controllers\RekapExportController;
 
-// Pengunjung dialihkan ke Landing Page SIDAK BKSDA
+// Pengunjung dialihkan ke halaman utama SINTUVU BKSDA
 Route::get('/', function () {
     return view('landing');
 })->name('landing');
 
-// ROUTE SIDAK BKSDA (Wajib Login)
+// ROUTE SINTUVU BKSDA (Wajib Login)
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [KonservasiController::class, 'dashboard'])->name('konservasi.dashboard');
     
@@ -21,8 +21,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     // ROUTE STORE
     Route::post('/konservasi', [KonservasiController::class, 'store'])->name('konservasi.store');
-    Route::post('/sidak', [KonservasiController::class, 'store'])->name('sidak.store'); // Alias tambahan untuk form SIDAK
+    Route::post('/sidak', [KonservasiController::class, 'store'])->name('sidak.store'); // Alias kompatibilitas untuk integrasi lama
     Route::post('/sub-bidang/store', [KonservasiController::class, 'store'])->name('sub-bidang.store');
+
+    Route::get('/konservasi/{id}/file', [KonservasiController::class, 'showFile'])->name('konservasi.file');
     
     // ROUTE TAMBAHAN UNTUK EDIT & UPDATE DATA
     Route::get('/konservasi/{id}/edit', [KonservasiController::class, 'edit'])->name('konservasi.edit');

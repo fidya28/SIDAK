@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Analytics - SIDAK BKSDA Sulawesi Tengah</title>
+    <title>SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah - Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -41,11 +41,11 @@
             <!-- Logo & Title Instansi -->
             <div class="flex items-center space-x-3">
                 <div class="w-11 h-11 rounded-xl bg-forest-700/10 border border-forest-700/20 flex items-center justify-center p-1.5 shadow-xs overflow-hidden">
-                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SIDAK" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/50?text=SIDAK';">
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SINTUVU" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/50?text=SINTUVU';">
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-bold text-sm tracking-tight text-slate-900 leading-tight">SIDAK BKSDA SULTENG</span>
-                    <span class="text-[11px] text-slate-500 font-medium">Sistem input data konservasi</span>
+                    <span class="font-bold text-sm tracking-tight text-slate-900 leading-tight">SINTUVU</span>
+                    <span class="text-[11px] text-slate-500 font-medium">BKSDA Sulawesi Tengah</span>
                 </div>
             </div>
 
@@ -71,6 +71,13 @@
                         <p class="text-[10px] text-slate-500">{{ Auth::user()->role ?? 'Operator' }}</p>
                     </div>
                 </div>
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                    @csrf
+                    <button type="submit" title="Keluar dari akun" aria-label="Keluar dari akun" class="inline-flex h-9 w-9 xl:w-auto items-center justify-center gap-2 rounded-lg border border-rose-200 bg-white px-2.5 text-rose-700 transition hover:bg-rose-50">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                        <span class="hidden xl:inline text-xs font-semibold">Keluar</span>
+                    </button>
+                </form>
             </div>
 
         </div>
@@ -147,12 +154,12 @@
             <!-- Card 3: Data Volume -->
             <div class="bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md transition">
                 <div class="flex items-center justify-between text-slate-500 mb-4">
-                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Entri dengan Volume</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Entri dengan Nilai</span>
                     <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
                         <i class="fa-solid fa-chart-column text-lg"></i>
                     </div>
                 </div>
-                <h3 class="text-3xl font-black text-slate-900">{{ number_format($totalEntriBervolume ?? 0) }}</h3>
+                <h3 class="text-3xl font-black text-slate-900">{{ number_format($totalEntriDenganNilai ?? 0) }}</h3>
                 <p class="text-xs text-slate-500 mt-2">Input yang memiliki nilai kuantitatif</p>
             </div>
 
@@ -169,45 +176,46 @@
                             <i class="fa-solid fa-chart-column text-sm"></i>
                             <span class="text-[10px] font-extrabold uppercase tracking-wider">Perbandingan Entri</span>
                         </div>
-                        <h3 class="font-bold text-lg text-slate-900">Jumlah Entri per Enam Bidang</h3>
-                        <p class="text-xs text-slate-500 mt-1">Setiap bidang tetap ditampilkan, termasuk yang belum memiliki data.</p>
+                        <h3 class="font-bold text-lg text-slate-900">Jumlah Entri per Sub-Bidang</h3>
+                        <p class="text-xs text-slate-500 mt-1">Setiap sub-bidang ditampilkan terpisah dan diberi warna sesuai bidang induknya.</p>
                     </div>
                     <span class="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-semibold text-slate-600">
-                        {{ number_format($totalData ?? 0) }} entri tersimpan
+                        {{ count($subBidangChart) }} sub-bidang memiliki entri
                     </span>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)] gap-6 items-start">
-                    <div class="relative h-[320px] min-w-0">
-                        <canvas id="bidangChart" aria-label="Jumlah entri pada enam bidang konservasi" role="img"></canvas>
+                    <div class="max-h-[360px] min-w-0 overflow-y-auto pr-2">
+                        @if(count($subBidangChart))
+                            <div style="height: {{ max(240, count($subBidangChart) * 34) }}px">
+                                <canvas id="subBidangChart" aria-label="Jumlah entri per sub-bidang konservasi" role="img"></canvas>
+                            </div>
+                        @else
+                            <div class="flex h-60 items-center justify-center rounded-xl border border-dashed border-slate-200 text-xs text-slate-500">Belum ada entri pada sub-bidang.</div>
+                        @endif
                     </div>
 
                     <div class="lg:border-l lg:border-slate-100 lg:pl-6">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h4 class="text-xs font-bold text-slate-800">Cakupan subbidang</h4>
-                                <p class="text-[10px] text-slate-400 mt-0.5">Jumlah kategori yang sudah memiliki entri</p>
+                                <h4 class="text-xs font-bold text-slate-800">Rincian Sub-Bidang</h4>
+                                <p class="text-[10px] text-slate-400 mt-0.5">Jumlah entri di tiap kategori</p>
                             </div>
                         </div>
-                        <div class="space-y-4">
-                            @foreach($bidangChart as $bidang)
+                        <div class="max-h-[360px] space-y-3 overflow-y-auto pr-2">
+                            @foreach($subBidangChart as $subBidang)
                                 @php
-                                    $coverage = $bidang['total_subbidang'] > 0
-                                        ? ($bidang['subbidang_terisi'] / $bidang['total_subbidang']) * 100
-                                        : 0;
+                                    $parentBidang = collect($bidangChart)->first(fn ($bidang) => str_starts_with($subBidang['kode'], $bidang['kode'] . '.'));
                                 @endphp
-                                <div>
-                                    <div class="flex items-start justify-between gap-3 mb-1.5">
-                                        <div class="flex items-start gap-2 min-w-0">
-                                            <span class="w-2.5 h-2.5 mt-1 rounded-sm shrink-0" style="background-color: {{ $bidang['warna'] }}"></span>
-                                            <span class="text-[11px] font-semibold text-slate-700 leading-snug">{{ $bidang['nama'] }}</span>
+                                <div class="flex items-start justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+                                    <div class="flex min-w-0 items-start gap-2">
+                                        <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-sm" style="background-color: {{ $parentBidang['warna'] ?? '#64748b' }}"></span>
+                                        <div class="min-w-0">
+                                            <p class="text-[11px] font-semibold leading-snug text-slate-800">{{ $subBidang['kode'] }} · {{ $subBidang['nama'] }}</p>
+                                            <p class="mt-0.5 text-[10px] text-slate-400">{{ $subBidang['nama_bidang'] }}</p>
                                         </div>
-                                        <span class="text-[11px] font-bold text-slate-800 shrink-0">{{ number_format($bidang['jumlah_entri']) }}</span>
                                     </div>
-                                    <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                        <div class="h-full rounded-full" style="width: {{ $coverage }}%; background-color: {{ $bidang['warna'] }}"></div>
-                                    </div>
-                                    <p class="text-[10px] text-slate-400 mt-1">{{ $bidang['subbidang_terisi'] }} dari {{ $bidang['total_subbidang'] }} subbidang terisi</p>
+                                    <span class="shrink-0 text-[11px] font-bold text-slate-800">{{ number_format($subBidang['jumlah_entri']) }}</span>
                                 </div>
                             @endforeach
                         </div>
@@ -246,46 +254,50 @@
                 </div>
             </div>
 
-            <!-- Volume ditampilkan per subbidang agar satuan tidak tercampur -->
+            <!-- Grafik jumlah entri per bidang -->
             <div class="lg:col-span-3 bg-white/90 backdrop-blur-md p-6 rounded-2xl shadow-sm border border-slate-200/80">
-                <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-5">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-5">
                     <div>
-                        <div class="flex items-center gap-2 text-amber-700 mb-1">
-                            <i class="fa-solid fa-chart-bar text-sm"></i>
-                            <span class="text-[10px] font-extrabold uppercase tracking-wider">Data Kuantitatif</span>
+                        <div class="flex items-center gap-2 text-emerald-700 mb-1">
+                            <i class="fa-solid fa-chart-column text-sm"></i>
+                            <span class="text-[10px] font-extrabold uppercase tracking-wider">Perbandingan Bidang</span>
                         </div>
-                        <h3 class="font-bold text-lg text-slate-900">Volume Input per Sub-Bidang</h3>
-                        <p class="text-xs text-slate-500 mt-1">Nilai dijumlahkan di dalam subbidang masing-masing, bukan antarjenis satuan.</p>
+                        <h3 class="font-bold text-lg text-slate-900">Jumlah Entri per Bidang</h3>
+                        <p class="text-xs text-slate-500 mt-1">Total data tersimpan untuk masing-masing dari enam bidang.</p>
                     </div>
-                    <span class="text-[11px] font-semibold text-slate-500">{{ count($volumeChart) }} subbidang memiliki nilai volume</span>
+                    <span class="text-[11px] font-semibold text-slate-500">{{ number_format($totalData ?? 0) }} entri tersimpan</span>
                 </div>
 
-                @if(count($volumeChart))
-                    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] gap-6 items-start">
-                        <div class="max-h-[360px] overflow-y-auto pr-2">
-                            <div style="height: {{ max(220, count($volumeChart) * 42) }}px">
-                                <canvas id="volumeChart" aria-label="Nilai kuantitatif per sub-bidang" role="img"></canvas>
-                            </div>
-                        </div>
-                        <div class="divide-y divide-slate-100">
-                            @foreach($volumeChart as $subBidang)
-                                <div class="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
-                                    <div class="min-w-0">
-                                        <p class="text-[11px] font-bold text-slate-800">{{ $subBidang['kode'] }} · {{ $subBidang['nama'] }}</p>
-                                        <p class="text-[10px] text-slate-400 mt-0.5">{{ $subBidang['nama_bidang'] }} · {{ $subBidang['entri_bervolume'] }} entri bervolume</p>
+                <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)] gap-6 items-start">
+                    <div class="relative h-[320px] min-w-0">
+                        <canvas id="bidangChart" aria-label="Jumlah entri pada enam bidang konservasi" role="img"></canvas>
+                    </div>
+                    <div class="lg:border-l lg:border-slate-100 lg:pl-6">
+                        <h4 class="mb-4 text-xs font-bold text-slate-800">Cakupan Sub-Bidang</h4>
+                        <div class="space-y-4">
+                            @foreach($bidangChart as $bidang)
+                                @php
+                                    $coverage = $bidang['total_subbidang'] > 0
+                                        ? ($bidang['subbidang_terisi'] / $bidang['total_subbidang']) * 100
+                                        : 0;
+                                @endphp
+                                <div>
+                                    <div class="mb-1.5 flex items-start justify-between gap-3">
+                                        <div class="flex min-w-0 items-start gap-2">
+                                            <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-sm" style="background-color: {{ $bidang['warna'] }}"></span>
+                                            <span class="text-[11px] font-semibold leading-snug text-slate-700">{{ $bidang['nama'] }}</span>
+                                        </div>
+                                        <span class="shrink-0 text-[11px] font-bold text-slate-800">{{ number_format($bidang['jumlah_entri']) }}</span>
                                     </div>
-                                    <span class="text-sm font-extrabold text-slate-900 shrink-0">{{ number_format($subBidang['jumlah_volume'], 0, ',', '.') }} {{ $subBidang['satuan'] }}</span>
+                                    <div class="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                                        <div class="h-full rounded-full" style="width: {{ $coverage }}%; background-color: {{ $bidang['warna'] }}"></div>
+                                    </div>
+                                    <p class="mt-1 text-[10px] text-slate-400">{{ $bidang['subbidang_terisi'] }} dari {{ $bidang['total_subbidang'] }} sub-bidang terisi</p>
                                 </div>
                             @endforeach
                         </div>
                     </div>
-                @else
-                    <div class="min-h-36 flex flex-col items-center justify-center text-center border border-dashed border-slate-200 rounded-xl px-5">
-                        <i class="fa-solid fa-chart-bar text-xl text-slate-300 mb-2"></i>
-                        <p class="text-sm font-semibold text-slate-600">Belum ada input dengan nilai volume</p>
-                        <p class="text-xs text-slate-400 mt-1">Grafik terisi otomatis saat kategori menyimpan nilai kuantitatif.</p>
-                    </div>
-                @endif
+                </div>
             </div>
 
         </div>
@@ -295,7 +307,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const bidangStats = @js($bidangChart ?? []);
-            const volumeStats = @js($volumeChart ?? []);
+            const subBidangStats = @js($subBidangChart ?? []);
             const numberFormat = new Intl.NumberFormat('id-ID');
             const sharedOptions = {
                 indexAxis: 'y',
@@ -357,22 +369,22 @@
                 },
             });
 
-            const volumeCanvas = document.getElementById('volumeChart');
-            if (volumeCanvas && volumeStats.length) {
-                const volumeColors = volumeStats.map((item) => {
+            const subBidangCanvas = document.getElementById('subBidangChart');
+            if (subBidangCanvas && subBidangStats.length) {
+                const subBidangColors = subBidangStats.map((item) => {
                     const bidang = bidangStats.find((field) => item.kode.startsWith(field.kode + '.'));
                     return bidang?.warna ?? '#64748b';
                 });
 
-                new Chart(volumeCanvas, {
+                new Chart(subBidangCanvas, {
                     type: 'bar',
                     data: {
-                        labels: volumeStats.map((item) => item.kode),
+                        labels: subBidangStats.map((item) => item.kode),
                         datasets: [{
-                            data: volumeStats.map((item) => item.jumlah_volume),
-                            backgroundColor: volumeColors,
+                            data: subBidangStats.map((item) => item.jumlah_entri),
+                            backgroundColor: subBidangColors,
                             borderRadius: 5,
-                            barThickness: 22,
+                            barThickness: 20,
                         }]
                     },
                     options: {
@@ -383,12 +395,12 @@
                                 ...sharedOptions.plugins.tooltip,
                                 callbacks: {
                                     title(context) {
-                                        const item = volumeStats[context[0].dataIndex];
+                                        const item = subBidangStats[context[0].dataIndex];
                                         return `${item.kode} · ${item.nama}`;
                                     },
                                     label(context) {
-                                        const item = volumeStats[context.dataIndex];
-                                        return ` ${numberFormat.format(context.raw)} ${item.satuan}`;
+                                        const item = subBidangStats[context.dataIndex];
+                                        return ` ${numberFormat.format(context.raw)} entri · ${item.nama_bidang}`;
                                     }
                                 }
                             }

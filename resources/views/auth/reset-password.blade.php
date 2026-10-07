@@ -1,4 +1,4 @@
-<x-guest-layout :title="'Reset Password - SIDAK BKSDA Sulawesi Tengah'">
+<x-guest-layout :title="'Reset Password - SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah'">
 
     <span class="auth-badge"><span class="dot"></span> BUAT PASSWORD BARU</span>
     <h1>Reset <em>password</em></h1>

@@ -13,7 +13,7 @@ class DashboardAnalyticsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dashboard_shows_all_six_fields_and_separates_volume_by_sub_bidang(): void
+    public function test_dashboard_shows_sub_bidang_chart_in_place_of_volume_and_bidang_chart_below(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
         $fields = [
@@ -65,18 +65,18 @@ class DashboardAnalyticsTest extends TestCase
         $this->actingAs($user)
             ->get(route('konservasi.dashboard'))
             ->assertOk()
-            ->assertSee('Jumlah Entri per Enam Bidang')
-            ->assertSee('Volume Input per Sub-Bidang')
+            ->assertSee('Jumlah Entri per Sub-Bidang')
+            ->assertSee('Jumlah Entri per Bidang')
+            ->assertSee('Cakupan Sub-Bidang')
             ->assertSee('Perencanaan Konservasi')
             ->assertSee('Konservasi Kawasan')
             ->assertSee('Konservasi Spesies dan Genetik')
             ->assertSee('Pemanfaatan Jasa Lingkungan')
             ->assertSee('Pemulihan Ekosistem dan Bina Area Preservasi')
             ->assertSee('Kesekretariatan')
-            ->assertSee('2 subbidang memiliki nilai volume')
+            ->assertSee('3 sub-bidang memiliki entri')
             ->assertSee('A.03 · Monitoring Batas Kawasan Konservasi')
             ->assertSee('B.01 · Kelompok Binaan')
-            ->assertSee('12 pal')
-            ->assertSee('5 orang');
+            ->assertDontSee('Volume Input per Sub-Bidang');
     }
 }

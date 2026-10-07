@@ -17,14 +17,29 @@ class KonservasiStoreTest extends TestCase
 
     public function test_create_page_uses_named_sub_bidang_route_and_shows_validation_errors(): void
     {
+        $this->seed(\Database\Seeders\BidangSeeder::class);
         $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::where('nama_bidang', 'Perencanaan Konservasi')->firstOrFail();
         $subBidangUrl = route('konservasi.sub-bidang', ['bidang_id' => '__BIDANG_ID__']);
 
         $this->actingAs($user)
             ->get(route('konservasi.create'))
             ->assertOk()
+            ->assertSee('id="conservation-form"', false)
+            ->assertSee('Perencanaan Konservasi')
+            ->assertSee("selectedSubBidangKode === 'A.01'", false)
+            ->assertSee('action="' . route('logout') . '"', false)
+            ->assertSee('Keluar dari akun')
             ->assertSee($subBidangUrl, false)
             ->assertDontSee('name="keterangan"', false);
+
+        $this->actingAs($user)
+            ->get(route('konservasi.sub-bidang', ['bidang_id' => $bidang->id]))
+            ->assertOk()
+            ->assertJsonFragment([
+                'kode_sub' => 'A.01',
+                'nama_sub_bidang' => 'Kawasan Konservasi',
+            ]);
 
         $this->from(route('konservasi.create'))
             ->actingAs($user)
@@ -35,6 +50,71 @@ class KonservasiStoreTest extends TestCase
             ->assertOk()
             ->assertSee('Data belum tersimpan. Periksa kembali isian berikut:')
             ->assertSee('sub bidang id field is required');
+    }
+
+    public function test_logout_is_available_in_all_authenticated_navigation_bars(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Konservasi Spesies dan Genetik']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'C.01',
+            'nama_sub_bidang' => 'Perjumpaan Spesies di dalam dan luar Kawasan Konservasi',
+        ]);
+        $record = DataKonservasi::create([
+            'user_id' => $user->id,
+            'sub_bidang_id' => $subBidang->id,
+            'tahun' => 2026,
+            'latitude' => '-0.89',
+            'longitude' => '119.87',
+            'jumlah' => 3,
+            'keterangan' => 'Spesies: Anoa',
+        ]);
+        $logoutAction = 'action="' . route('logout') . '"';
+
+        $this->actingAs($user);
+
+        foreach ([
+            route('konservasi.dashboard'),
+            route('konservasi.index'),
+            route('konservasi.create'),
+            route('konservasi.edit', $record->id),
+            route('konservasi.peta'),
+            route('landing'),
+        ] as $url) {
+            $this->get($url)
+                ->assertOk()
+                ->assertSee($logoutAction, false);
+        }
+    }
+
+    public function test_gis_marker_data_includes_bidang_color_and_sub_bidang_details(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Konservasi Spesies dan Genetik']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'C.01',
+            'nama_sub_bidang' => 'Perjumpaan Spesies di dalam dan luar Kawasan Konservasi',
+        ]);
+        DataKonservasi::create([
+            'user_id' => $user->id,
+            'sub_bidang_id' => $subBidang->id,
+            'tahun' => 2026,
+            'latitude' => '-0.89',
+            'longitude' => '119.87',
+            'jumlah' => 3,
+            'keterangan' => 'Spesies: Anoa | Lokasi: Cagar Alam Dako',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('konservasi.peta'))
+            ->assertOk()
+            ->assertSee('Konservasi Spesies dan Genetik')
+            ->assertSee('C.01')
+            ->assertSee('Perjumpaan Spesies di dalam dan luar Kawasan Konservasi')
+            ->assertSee('Spesies: Anoa | Lokasi: Cagar Alam Dako')
+            ->assertSee('#e11d48');
     }
 
     public function test_oversized_sk_parsial_file_shows_limit_and_does_not_save_record(): void
@@ -51,21 +131,13 @@ class KonservasiStoreTest extends TestCase
             ->from(route('konservasi.create'))
             ->post(route('konservasi.store'), [
                 'sub_bidang_id' => $subBidang->id,
-<<<<<<< HEAD
                 'sk_parsial_file' => UploadedFile::fake()->create('sk-parsial.pdf', 11000, 'application/pdf'),
-=======
-                'sk_parsial_file' => UploadedFile::fake()->create('sk-parsial.pdf', 2500, 'application/pdf'),
->>>>>>> temp-fix
             ])
             ->assertRedirect(route('konservasi.create'));
 
         $this->get(route('konservasi.create'))
             ->assertOk()
-<<<<<<< HEAD
             ->assertSee('Ukuran File SK parsial maksimal 10 MB per file.');
-=======
-            ->assertSee('Ukuran file SK parsial maksimal 2 MB.');
->>>>>>> temp-fix
 
         $this->assertDatabaseCount('data_konservasi', 0);
     }
@@ -422,6 +494,34 @@ class KonservasiStoreTest extends TestCase
         $this->assertStringContainsString('Nama Kelompok: Kelompok Baru', $record->keterangan);
         $this->assertStringContainsString('Periode Semester: Semester II', $record->keterangan);
         $this->assertStringContainsString('Keterangan: Catatan lama', $record->keterangan);
+    }
+
+    public function test_d09_coordinates_are_saved_for_the_gis_map(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Pemanfaatan Jasa Lingkungan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'D.09',
+            'nama_sub_bidang' => 'Potensi Pemanfaatan Air dan Energi Air di Kawasan Konservasi',
+        ]);
+
+        $this->actingAs($user)->post(route('konservasi.store'), [
+            'sub_bidang_id' => $subBidang->id,
+            'tahun' => '2026',
+            'latitude_air_d09' => '-0.897123',
+            'longitude_air_d09' => '119.87123',
+        ])->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::firstOrFail();
+        $this->assertSame('-0.897123', $record->latitude);
+        $this->assertSame('119.87123', $record->longitude);
+
+        $this->actingAs($user)
+            ->get(route('konservasi.peta'))
+            ->assertOk()
+            ->assertSee('-0.897123')
+            ->assertSee('119.87123');
     }
 
     public function test_c15_release_fields_are_saved_with_period_count_and_coordinates(): void

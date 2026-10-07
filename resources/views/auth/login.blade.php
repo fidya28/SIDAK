@@ -1,7 +1,7 @@
-<x-guest-layout :title="'Masuk - SIDAK BKSDA Sulawesi Tengah'">
+<x-guest-layout :title="'Masuk - SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah'">
 
     <span class="auth-badge"><span class="dot"></span> SELAMAT DATANG KEMBALI</span>
-    <h1>Masuk ke <em>SIDAK</em></h1>
+    <h1>Masuk ke <em>SINTUVU</em></h1>
     <p class="sub">Silakan masukkan akun kamu untuk mengakses sistem.</p>
 
     @if (session('status'))

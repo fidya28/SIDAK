@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Data - SIDAK BKSDA Sulawesi Tengah</title>
+    <title>SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah - Input Data</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -87,11 +87,11 @@
             <!-- Logo & Title Instansi -->
             <div class="flex items-center space-x-3">
                 <div class="w-11 h-11 rounded-xl bg-forest-700/10 border border-forest-700/20 flex items-center justify-center p-1.5 shadow-xs overflow-hidden">
-                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SIDAK" class="w-full h-full object-contain">
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SINTUVU" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-bold text-sm tracking-tight text-slate-900 leading-tight">SIDAK BKSDA SULTENG</span>
-                    <span class="text-[11px] text-slate-500 font-medium">Sistem Input data konservasi</span>
+                    <span class="font-bold text-sm tracking-tight text-slate-900 leading-tight">SINTUVU</span>
+                    <span class="text-[11px] text-slate-500 font-medium">BKSDA Sulawesi Tengah</span>
                 </div>
             </div>
 
@@ -117,6 +117,13 @@
                         <p class="text-[10px] text-slate-500">{{ Auth::user()->role ?? 'Operator' }}</p>
                     </div>
                 </div>
+                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                    @csrf
+                    <button type="submit" title="Keluar dari akun" aria-label="Keluar dari akun" class="inline-flex h-9 w-9 xl:w-auto items-center justify-center gap-2 rounded-lg border border-rose-200 bg-white px-2.5 text-rose-700 transition hover:bg-rose-50">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                        <span class="hidden xl:inline text-xs font-semibold">Keluar</span>
+                    </button>
+                </form>
             </div>
 
         </div>
@@ -224,7 +231,7 @@
                      return (Number(this.palBaik) || 0) + (Number(this.palRusak) || 0) + (Number(this.palHilang) || 0);
                  }
              }">
-            <form action="{{ route('konservasi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form id="conservation-form" action="{{ route('konservasi.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
 
                 <!-- SECTION: KLASIFIKASI DATA -->
@@ -1358,11 +1365,7 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1">Foto ODTWA (JPG/PNG):</label>
-<<<<<<< HEAD
                                 <p class="text-[11px] text-slate-500 mb-2">Ukuran maksimal 10 MB per file.</p>
-=======
-                                <p class="text-[11px] text-slate-500 mb-2">Ukuran maksimal 1 Mb</p>
->>>>>>> temp-fix
                                 <input type="file" name="foto_odtwa" accept="image/png,image/jpeg" class="w-full max-w-md h-12 rounded-xl border border-slate-300 bg-slate-50 text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                             </div>
 
@@ -1746,11 +1749,7 @@
 
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1">Foto Sarana &amp; Prasarana (JPG/PNG): <span class="text-rose-500">*</span></label>
-<<<<<<< HEAD
                                 <p class="text-[11px] text-slate-500 mb-2">Maksimal 3 foto, masing-masing berukuran maksimal 10 MB.</p>
-=======
-                                <p class="text-[11px] text-slate-500 mb-2">Maksimal 3 foto dengan ukuran maksimal 1 Mb</p>
->>>>>>> temp-fix
                                 <div class="flex flex-col md:flex-row gap-4 items-start"><input type="file" name="foto_sarana_prasarana_d07[]" accept="image/png,image/jpeg" multiple x-bind:required="adaSaranaPrasaranaD07 === 'ya'" class="w-full md:w-1/2 h-12 rounded-xl border border-slate-300 bg-slate-50 text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"><div class="grid grid-cols-3 gap-3 w-full md:w-1/2">@foreach (range(1, 3) as $photoNumber)<div class="h-28 rounded-xl border border-slate-300 bg-white flex items-start p-2 text-xs font-bold text-slate-800">{{ $photoNumber }}</div>@endforeach</div></div>
                             </div>
 
@@ -2233,11 +2232,7 @@
                             <div><label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Perizinan: <span class="text-rose-500">*</span></label><input type="date" name="tanggal_perizinan_c02" x-bind:required="adaDataLembagaC02 === 'ya'" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></div>
                             <div><label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berakhir Izin:</label><input type="date" name="tanggal_berakhir_izin_c02" x-bind:required="adaDataLembagaC02 === 'ya' && bentukLembagaUmumC02.includes(bentukLembagaC02)" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"><p class="mt-2 text-[11px] text-slate-500">Tanggal berakhir izin wajib diisi jika bentuk lembaga konservasi termasuk kategori lembaga konservasi umum</p></div>
                         </div>
-<<<<<<< HEAD
                         <div><label class="block text-xs font-bold text-slate-700 mb-1">Dokumen Perizinan (pdf):</label><p class="mb-2 text-[11px] text-slate-500">Format PDF, maksimal 10 MB per file.</p><input type="file" name="dokumen_perizinan_c02" accept=".pdf,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 border border-slate-300 bg-white rounded-xl"></div>
-=======
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Dokumen Perizinan (pdf):</label><p class="mb-2 text-[11px] text-slate-500">Format file pdf dan maksimal 1 file berukuran 2 Mb</p><input type="file" name="dokumen_perizinan_c02" accept=".pdf,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 border border-slate-300 bg-white rounded-xl"></div>
->>>>>>> temp-fix
                         <div><label class="block text-xs font-bold text-slate-700 mb-1">Keterangan:</label><textarea name="keterangan_c02" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></textarea></div>
                     </div>
                 </div>
@@ -2293,11 +2288,7 @@
                             <div><label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Perizinan: <span class="text-rose-500">*</span></label><input type="date" name="tanggal_perizinan_c04" x-bind:required="adaDataPenangkaranC04 === 'ya'" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></div>
                             <div><label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berakhir Izin: <span class="text-rose-500">*</span></label><input type="date" name="tanggal_berakhir_izin_c04" x-bind:required="adaDataPenangkaranC04 === 'ya'" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></div>
                         </div>
-<<<<<<< HEAD
                         <div><label class="block text-xs font-bold text-slate-700 mb-1">Dokumen Perizinan (pdf):</label><p class="mb-2 text-[11px] text-slate-500">Format PDF, maksimal 10 MB per file.</p><input type="file" name="dokumen_perizinan_c04" accept=".pdf,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 border border-slate-300 bg-white rounded-xl"></div>
-=======
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Dokumen Perizinan (pdf):</label><p class="mb-2 text-[11px] text-slate-500">Format file pdf dan maksimal 1 file berukuran 2 Mb</p><input type="file" name="dokumen_perizinan_c04" accept=".pdf,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 border border-slate-300 bg-white rounded-xl"></div>
->>>>>>> temp-fix
                         <div><label class="block text-xs font-bold text-slate-700 mb-1">Keterangan:</label><textarea name="keterangan_c04" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></textarea></div>
                     </div>
                 </div>
@@ -2497,11 +2488,7 @@
                             <div><label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Perizinan: <span class="text-rose-500">*</span></label><input type="date" name="tanggal_perizinan_c06" x-bind:required="adaDataPengedarC06 === 'ya'" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></div>
                             <div><label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Berakhir Izin: <span class="text-rose-500">*</span></label><input type="date" name="tanggal_berakhir_izin_c06" x-bind:required="adaDataPengedarC06 === 'ya'" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></div>
                         </div>
-<<<<<<< HEAD
                         <div><label class="block text-xs font-bold text-slate-700 mb-1">Dokumen Perizinan (pdf):</label><p class="mb-2 text-[11px] text-slate-500">Format PDF, maksimal 10 MB per file.</p><input type="file" name="dokumen_perizinan_c06" accept=".pdf,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 border border-slate-300 bg-white rounded-xl"></div>
-=======
-                        <div><label class="block text-xs font-bold text-slate-700 mb-1">Dokumen Perizinan (pdf):</label><p class="mb-2 text-[11px] text-slate-500">Format file pdf dan maksimal 1 file berukuran 2 Mb</p><input type="file" name="dokumen_perizinan_c06" accept=".pdf,application/pdf" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 border border-slate-300 bg-white rounded-xl"></div>
->>>>>>> temp-fix
                         <div><label class="block text-xs font-bold text-slate-700 mb-1">Spesies yang Diedarkan: <span class="text-rose-500">*</span></label><input type="text" name="spesies_diedarkan_c06" x-bind:required="adaDataPengedarC06 === 'ya'" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></div>
                         <div><label class="block text-xs font-bold text-slate-700 mb-1">Keterangan:</label><textarea name="keterangan_c06" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none"></textarea></div>
                     </div>
@@ -3660,11 +3647,6 @@
 
                 </div>
 
-<<<<<<< HEAD
-                <div x-show="selectedSubBidangKode !== 'C.01' && selectedSubBidangKode !== 'C.02' && selectedSubBidangKode !== 'C.03' && selectedSubBidangKode !== 'C.04' && selectedSubBidangKode !== 'C.05' && selectedSubBidangKode !== 'C.06' && selectedSubBidangKode !== 'C.08' && selectedSubBidangKode !== 'C.09' && selectedSubBidangKode !== 'C.10' && selectedSubBidangKode !== 'C.11' && selectedSubBidangKode !== 'C.12' && selectedSubBidangKode !== 'C.14' && selectedSubBidangKode !== 'C.15' && selectedSubBidangKode !== 'C.16' && selectedSubBidangKode !== 'C.17'">
-                    <label class="block text-xs font-bold text-slate-700 mb-2">Keterangan:</label>
-                    <textarea name="keterangan" rows="3" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-slate-800 focus:ring-2 focus:ring-forest-600 outline-none text-xs font-medium"></textarea>
-=======
                 <!-- ========================================================================= -->
                 <!-- FORM DINAMIS SUB-BIDANG B.02: Akses Tradisional & Kemitraan                -->
                 <!-- ========================================================================= -->
@@ -3838,7 +3820,6 @@
                         </fieldset>
                     </div>
                     </fieldset>
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
                 </div>
 
                 <!-- Action Button -->
@@ -4137,7 +4118,7 @@
             window.setTimeout(() => window.c17Map.invalidateSize(), 100);
         };
 
-        const conservationForm = document.querySelector('form');
+        const conservationForm = document.getElementById('conservation-form');
         const disabledBeforePanelHidden = new WeakMap();
 
         function syncHiddenPanelControls() {
@@ -4186,12 +4167,8 @@
             subSelect.disabled = true;
 
             if (bidangId) {
-<<<<<<< HEAD
-                fetch('{{ url('/get-sub-bidang') }}/' + encodeURIComponent(bidangId))
-=======
                 const subBidangUrl = subBidangUrlTemplate.replace('__BIDANG_ID__', encodeURIComponent(bidangId));
                 fetch(subBidangUrl)
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
                     .then(response => response.json())
                     .then(data => {
                         subSelect.innerHTML = '<option value="">-- Pilih Sub-Bidang Kategori --</option>';

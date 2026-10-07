@@ -13,7 +13,7 @@ class RekapExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_rekap_hides_data_and_search_until_sub_bidang_is_selected(): void
+    public function test_rekap_shows_keyword_search_before_a_sub_bidang_is_selected(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
 
@@ -21,8 +21,53 @@ class RekapExportTest extends TestCase
             ->get(route('rekap.index'))
             ->assertOk()
             ->assertSee('Pilih Kategori Data Konservasi')
-            ->assertDontSee('Riwayat Data Konservasi')
-            ->assertDontSee('name="search"', false);
+            ->assertSee('name="search"', false)
+            ->assertSee('Bidang, sub-bidang, tahun, atau detail data')
+            ->assertDontSee('Hasil Pencarian');
+    }
+
+    public function test_global_keyword_search_matches_bidang_sub_bidang_year_and_dynamic_details(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $perencanaan = Bidang::create(['nama_bidang' => 'Perencanaan Konservasi']);
+        $kawasan = Bidang::create(['nama_bidang' => 'Konservasi Kawasan']);
+        $a01 = SubBidang::create([
+            'bidang_id' => $perencanaan->id,
+            'kode_sub' => 'A.01',
+            'nama_sub_bidang' => 'Kawasan Konservasi',
+        ]);
+        $b01 = SubBidang::create([
+            'bidang_id' => $kawasan->id,
+            'kode_sub' => 'B.01',
+            'nama_sub_bidang' => 'Kelompok Binaan',
+        ]);
+
+        DataKonservasi::create([
+            'user_id' => $user->id,
+            'sub_bidang_id' => $a01->id,
+            'tahun' => 2026,
+            'keterangan' => 'Nama Kawasan: Cagar Alam Morowali | Status: Aktif',
+        ]);
+        DataKonservasi::create([
+            'user_id' => $user->id,
+            'sub_bidang_id' => $b01->id,
+            'tahun' => 2025,
+            'keterangan' => 'Nama Kelompok: Rotan Lestari | Jenis HHBK: Rotan',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('rekap.index', ['search' => 'Perencanaan A.01 2026 Morowali']))
+            ->assertOk()
+            ->assertSee('Hasil Pencarian')
+            ->assertSee('Kawasan Konservasi')
+            ->assertSee('Cagar Alam Morowali')
+            ->assertDontSee('Rotan Lestari');
+
+        $this->get(route('rekap.index', ['search' => 'Konservasi Kawasan B.01 2025 Rotan Lestari']))
+            ->assertOk()
+            ->assertSee('Rotan Lestari')
+            ->assertSee('Jenis HHBK')
+            ->assertDontSee('Cagar Alam Morowali');
     }
 
     public function test_exports_only_the_selected_sub_bidang_and_include_all_rows(): void

@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'SINTUVU - Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah'),
 
     /*
     |--------------------------------------------------------------------------

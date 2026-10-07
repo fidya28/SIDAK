@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>SIDAK — Sistem Informasi dan Data Konservasi | BKSDA Sulawesi Tengah</title>
+<title>SINTUVU — Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah</title>
 <style>
   :root{
     --forest-950:#07160f;
@@ -351,7 +351,7 @@
         <img src="{{ asset('images/logo-icon.png') . '?v=2' }}" alt="Logo Balai KSDA Sulawesi Tengah">
       </div>
       <div>
-        <div class="brand-name">SIDAK</div>
+        <div class="brand-name">SINTUVU</div>
         <div class="brand-sub">BKSDA Sulawesi Tengah</div>
       </div>
     </div>
@@ -364,6 +364,10 @@
     <div class="nav-actions">
       @auth
         <a href="{{ route('konservasi.dashboard') }}" class="btn btn-solid">Ke dashboard</a>
+        <form method="POST" action="{{ route('logout') }}">
+          @csrf
+          <button type="submit" class="btn btn-outline-light" aria-label="Keluar dari akun">Keluar</button>
+        </form>
       @else
         <a href="{{ route('login') }}" class="btn btn-solid">Masuk</a>
       @endauth
@@ -385,7 +389,7 @@
       </div>
       <span class="eyebrow" style="margin-top:18px;"><span class="dot"></span> Sistem informasi &amp; data konservasi</span>
       <h1>Satu sistem untuk<br>menjaga <em>kekayaan hayati</em><br>Sulawesi Tengah</h1>
-      <p class="lead">SIDAK mencatat data kawasan konservasi, memantau satwa dan tumbuhan endemik, serta merapikan pelaporan kinerja — dari lapangan sampai ke meja kerja.</p>
+      <p class="lead">SINTUVU mencatat data kawasan konservasi, memantau satwa dan tumbuhan endemik, serta merapikan pelaporan kinerja — dari lapangan sampai ke meja kerja.</p>
       <div class="hero-cta">
         @auth
           <a href="{{ route('konservasi.dashboard') }}" class="btn btn-solid">Ke dashboard</a>
@@ -412,7 +416,7 @@
     <div class="section-head">
       <span class="eyebrow on-light">Fitur utama</span>
       <h2>Semua data konservasi, satu pintu masuk</h2>
-      <p>SIDAK dirancang mengikuti alur kerja Balai KSDA — mulai dari pencatatan lapangan sampai laporan yang siap diajukan.</p>
+      <p>SINTUVU dirancang mengikuti alur kerja Balai KSDA — mulai dari pencatatan lapangan sampai laporan yang siap diajukan.</p>
     </div>
     <div class="feat-grid">
       <div class="feat-card">
@@ -455,7 +459,7 @@
       <div class="step">
         <div class="step-num">02</div>
         <h3>Sistem menyusun data</h3>
-        <p>SIDAK mencocokkan lokasi, mengelompokkan spesies, dan menyusun data ke dalam basis data konservasi yang terstruktur.</p>
+        <p>SINTUVU mencocokkan lokasi, mengelompokkan spesies, dan menyusun data ke dalam basis data konservasi yang terstruktur.</p>
       </div>
       <div class="step">
         <div class="step-num">03</div>
@@ -533,7 +537,7 @@
         <span class="eyebrow on-light">Satwa dilindungi</span>
         <h2 style="margin-top:14px;">8 satwa endemik yang kami lindungi</h2>
       </div>
-      <p>Sebagian satwa dilindungi Sulawesi Tengah yang datanya tercatat dan dipantau melalui SIDAK.</p>
+      <p>Sebagian satwa dilindungi Sulawesi Tengah yang datanya tercatat dan dipantau melalui SINTUVU.</p>
     </div>
 
     <div class="satwa-grid">
@@ -589,7 +593,7 @@
     <div class="cta-band">
       <span class="eyebrow"><span class="dot"></span> Balai KSDA Sulawesi Tengah</span>
       <h2>Siap mengelola data konservasi dengan lebih rapi?</h2>
-      <p>Masuk ke SIDAK untuk mulai mencatat, memantau, dan melaporkan data kawasan serta satwa endemik Sulawesi Tengah.</p>
+      <p>Masuk ke SINTUVU untuk mulai mencatat, memantau, dan melaporkan data kawasan serta satwa endemik Sulawesi Tengah.</p>
       <div class="cta-btns">
         @auth
           <a href="{{ route('konservasi.dashboard') }}" class="btn btn-solid">Ke dashboard</a>
@@ -608,9 +612,9 @@
       <div class="foot-brand">
         <div class="brand">
           <div class="brand-mark"><img src="{{ asset('images/logo-icon.png') . '?v=2' }}" alt="Logo Balai KSDA Sulawesi Tengah"></div>
-          <div><div class="brand-name" style="color:var(--cream);">SIDAK</div></div>
+          <div><div class="brand-name" style="color:var(--cream);">SINTUVU</div></div>
         </div>
-        <p>Sistem Informasi dan Data Konservasi Sumber Daya Alam Hayati dan Ekosistemnya — Balai KSDA Sulawesi Tengah.</p>
+        <p>SINTUVU adalah Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah — Balai KSDA.</p>
       </div>
       <div class="foot-col">
         <h5>Navigasi</h5>

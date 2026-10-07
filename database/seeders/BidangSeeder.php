@@ -5,21 +5,11 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Bidang;
 use App\Models\SubBidang;
-use Illuminate\Support\Facades\Schema;
 
 class BidangSeeder extends Seeder
 {
     public function run(): void
     {
-        // Matikan foreign key check (Aman untuk SQLite & MySQL)
-        Schema::disableForeignKeyConstraints();
-
-        Bidang::truncate();
-        SubBidang::truncate();
-
-        // Hidupkan kembali foreign key check
-        Schema::enableForeignKeyConstraints();
-
         $data = [
             // Gambar 1: Perencanaan Konservasi (Kode A)
             [
@@ -56,8 +46,9 @@ class BidangSeeder extends Seeder
             // Gambar 3: Konservasi Spesies dan Genetik (Kode C)
             [
                 'bidang' => 'Konservasi Spesies dan Genetik',
-                    SubBidang::query()->delete();
-                    Bidang::query()->delete();
+                'subs' => [
+                    ['C.01', 'Perjumpaan Spesies di dalam dan luar Kawasan Konservasi'],
+                    ['C.02', 'Lembaga Konservasi Umum dan Khusus'],
                     ['C.03', 'Koleksi TSL di Lembaga Konservasi'],
                     ['C.04', 'Penangkaran Tumbuhan dan Satwa Liar'],
                     ['C.05', 'Jenis TSL yang ditangkarkan di Penangkaran'],
@@ -126,13 +117,15 @@ class BidangSeeder extends Seeder
         ];
 
         foreach ($data as $item) {
-            $bidang = Bidang::create(['nama_bidang' => $item['bidang']]);
+            $bidang = Bidang::firstOrCreate(['nama_bidang' => $item['bidang']]);
             foreach ($item['subs'] as $sub) {
-                SubBidang::create([
-                    'bidang_id' => $bidang->id,
-                    'kode_sub' => $sub[0],
-                    'nama_sub_bidang' => $sub[1],
-                ]);
+                SubBidang::updateOrCreate(
+                    ['kode_sub' => $sub[0]],
+                    [
+                        'bidang_id' => $bidang->id,
+                        'nama_sub_bidang' => $sub[1],
+                    ]
+                );
             }
         }
     }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>{{ $title ?? 'SIDAK — BKSDA Sulawesi Tengah' }}</title>
+<title>{{ $title ?? 'SINTUVU — Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah' }}</title>
 <style>
   :root{
     --forest-900:#0b2419;
@@ -110,7 +110,7 @@
     <div class="auth-brand-row">
       <img src="{{ asset('images/logo-icon.png') }}" alt="Logo Balai KSDA Sulawesi Tengah">
       <div>
-        <strong>SIDAK</strong>
+        <strong>SINTUVU</strong>
         <span>BKSDA Sulawesi Tengah</span>
       </div>
     </div>

@@ -7,6 +7,7 @@ use App\Models\SubBidang;
 use App\Models\DataKonservasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class KonservasiController extends Controller
@@ -16,6 +17,7 @@ class KonservasiController extends Controller
     {
         if ($request->filled('search')) {
             $search = trim($request->search);
+            $searchTerms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
 
             // Mapping nama bulan Indonesia & Inggris ke format angka
             $monthsMap = [
@@ -33,27 +35,29 @@ class KonservasiController extends Controller
                 'desember' => '12', 'december' => '12', 'des' => '12', 'dec' => '12',
             ];
 
-            $searchLower = strtolower($search);
-            $monthNumber = $monthsMap[$searchLower] ?? null;
+            $query->where(function ($allTerms) use ($searchTerms, $monthsMap) {
+                foreach ($searchTerms as $term) {
+                    $monthNumber = $monthsMap[strtolower($term)] ?? null;
 
-            $query->where(function ($q) use ($search, $monthNumber) {
-                $q->where('keterangan', 'like', "%{$search}%")
-                  ->orWhere('tahun', 'like', "%{$search}%")
-                  ->orWhere('jumlah', 'like', "%{$search}%")
-                  ->orWhere('bulan', 'like', "%{$search}%");
+                    $allTerms->where(function ($termQuery) use ($term, $monthNumber) {
+                        $termQuery->where('keterangan', 'like', "%{$term}%")
+                            ->orWhere('tahun', 'like', "%{$term}%")
+                            ->orWhere('jumlah', 'like', "%{$term}%")
+                            ->orWhere('bulan', 'like', "%{$term}%")
+                            ->orWhereHas('subBidang', function ($subQ) use ($term) {
+                                $subQ->where('nama_sub_bidang', 'like', "%{$term}%")
+                                    ->orWhere('kode_sub', 'like', "%{$term}%")
+                                    ->orWhereHas('bidang', function ($bidangQ) use ($term) {
+                                        $bidangQ->where('nama_bidang', 'like', "%{$term}%");
+                                    });
+                            });
 
-                if ($monthNumber) {
-                    $q->orWhere('bulan', $monthNumber)
-                      ->orWhere('bulan', (int)$monthNumber);
+                        if ($monthNumber) {
+                            $termQuery->orWhere('bulan', $monthNumber)
+                                ->orWhere('bulan', (int) $monthNumber);
+                        }
+                    });
                 }
-
-                $q->orWhereHas('subBidang', function ($subQ) use ($search) {
-                    $subQ->where('nama_sub_bidang', 'like', "%{$search}%")
-                         ->orWhere('kode_sub', 'like', "%{$search}%")
-                         ->orWhereHas('bidang', function ($bidangQ) use ($search) {
-                             $bidangQ->where('nama_bidang', 'like', "%{$search}%");
-                         });
-                });
             });
         }
 
@@ -201,7 +205,8 @@ class KonservasiController extends Controller
         }
 
         $query = $this->applySearchFilter($query, $request);
-        $data = !$selectedSub
+        $canShowResults = $selectedSub || $request->filled('search');
+        $data = !$canShowResults
             ? collect()
             : ($request->boolean('export_all') ? $query->get() : $query->paginate(10)->withQueryString());
         
@@ -222,7 +227,7 @@ class KonservasiController extends Controller
         $datas = $query->get();
 
         $pdf = Pdf::loadView('konservasi.pdf', compact('datas'));
-        return $pdf->download('Data_Konservasi_SIDAK_BKSDA_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('Data_Konservasi_SINTUVU_Sulawesi_Tengah_' . date('Y-m-d') . '.pdf');
     }
 
     // Fitur Unduh Excel (CSV)
@@ -237,7 +242,7 @@ class KonservasiController extends Controller
         $query = $this->applySearchFilter($query, $request);
         $datas = $query->get();
 
-        $filename = 'Data_Konservasi_SIDAK_BKSDA_' . date('Y-m-d') . '.csv';
+        $filename = 'Data_Konservasi_SINTUVU_Sulawesi_Tengah_' . date('Y-m-d') . '.csv';
 
         $headers = [
             "Content-type"        => "text/csv; charset=UTF-8",
@@ -372,7 +377,6 @@ class KonservasiController extends Controller
             'A.05' => ['tahun_ekosistem', 'kawasan_nama_ekosistem', 'ketersediaan_ekosistem', 'shapefile_ekosistem_zip'],
             'A.06' => ['tahun_zonasi', 'kawasan_nama_zonasi', 'ketersediaan_zonasi', 'nomor_sk_zonasi', 'tanggal_sk_zonasi', 'file_sk_zonasi', 'shapefile_zonasi_zip'],
             'B.01' => ['tahun_b01', 'periode_semester', 'kawasan_nama_b01', 'ada_kegiatan_b01', 'nama_kelompok', 'jumlah_laki', 'jumlah_perempuan', 'provinsi', 'kabupaten', 'kecamatan', 'desa', 'hhbk_nihil', 'jenis_hhbk', 'pertanian_nihil', 'jenis_pertanian', 'perkebunan_nihil', 'jenis_perkebunan', 'peternakan_nihil', 'jenis_peternakan', 'perikanan_nihil', 'jenis_perikanan', 'wisata_nihil', 'jenis_wisata', 'produk_nihil', 'jenis_produk', 'pembibitan_nihil', 'jenis_pembibitan', 'lainnya_nihil', 'jenis_lainnya', 'jenis_bantuan', 'jumlah_bantuan', 'sumber_dana'],
-<<<<<<< HEAD
             'D.03' => ['dokumen_d03', 'shapefile_d03'],
             'D.04' => ['foto_odtwa'],
             'D.06' => ['dokumen_perizinan_pbp_d06', 'shapefile_pbp_d06'],
@@ -380,12 +384,7 @@ class KonservasiController extends Controller
             'D.10' => ['shapefile_d10'],
             'D.11' => ['dokumen_sk_d11', 'shapefile_d11'],
             'D.14' => ['dokumen_perizinan_d14', 'shapefile_d14'],
-=======
-<<<<<<< HEAD
             'B.02' => ['tahun_b02', 'kawasan_nama_b02', 'ada_akses_b02', 'jenis_pengelolaan_b02', 'jenis_akses_b02', 'jenis_dimanfaatkan_b02', 'nama_kelompok_b02', 'masyarakat_hukum_adat_b02', 'jumlah_laki_b02', 'jumlah_perempuan_b02', 'kabupaten_b02', 'kecamatan_b02', 'desa_b02', 'nomor_surat_dirjen_b02', 'nomor_pks_b02', 'tanggal_mulai_ks_b02', 'tanggal_akhir_pks_b02', 'luas_area_b02', 'zona_blok_b02', 'dokumen_kerjasama_b02', 'shapefile_kerjasama_b02'],
-=======
->>>>>>> temp-fix
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
             'C.01' => ['satuan_kerja_c01', 'temuan_perjumpaan_spesies_c01', 'tahun_c01', 'bulan_c01', 'spesies_c01', 'spesies_lainnya_c01', 'jumlah_individu_c01', 'tanggal_perjumpaan_c01', 'latitude_c01', 'longitude_c01', 'kategori_perjumpaan_c01', 'keterangan_c01'],
             'C.02' => ['tahun_c02', 'satuan_kerja_c02', 'ada_data_lembaga_c02', 'nama_lembaga_c02', 'bentuk_lembaga_c02', 'latitude_c02', 'longitude_c02', 'alamat_lembaga_c02', 'nomor_dokumen_perizinan_c02', 'luas_areal_c02', 'tanggal_perizinan_c02', 'tanggal_berakhir_izin_c02', 'dokumen_perizinan_c02', 'keterangan_c02'],
             'C.03' => ['tahun_c03', 'periode_semester_c03', 'satuan_kerja_c03', 'ada_data_koleksi_c03', 'lembaga_konservasi_c03', 'spesies_koleksi_c03', 'nama_spesies_lainnya_c03', 'jantan_c03', 'betina_c03', 'belum_diketahui_c03', 'keterangan_c03'],
@@ -398,19 +397,11 @@ class KonservasiController extends Controller
             'C.11' => ['tahun_c11', 'bulan_c11', 'satuan_kerja_c11', 'ada_data_sitaan_c11', 'spesies_c11', 'asal_usul_c11', 'jantan_c11', 'betina_c11', 'belum_diketahui_c11', 'keterangan_c11'],
             'C.12' => ['tahun_c12', 'bulan_c12', 'satuan_kerja_c12', 'ada_pnb_tsl_c12', 'akun_pnb_c12', 'realisasi_pnb_c12', 'keterangan_c12'],
             'C.14' => ['tahun_c14', 'bulan_c14', 'satuan_kerja_c14', 'ada_interaksi_negatif_c14', 'spesies_c14', 'spesies_lainnya_c14', 'tanggal_kejadian_c14', 'jumlah_individu_c14', 'satwa_mati_c14', 'latitude_c14', 'longitude_c14', 'meninggal_c14', 'cedera_c14', 'kerusakan_kebun_c14', 'kerusakan_bangunan_c14', 'kambing_c14', 'sapi_c14', 'kerbau_c14', 'anjing_c14', 'babi_c14', 'unggas_c14', 'taksiran_kerugian_c14', 'upaya_penanggulangan_c14', 'keterangan_c14'],
-<<<<<<< HEAD
             'C.15' => ['tahun_c15', 'bulan_c15', 'satuan_kerja_c15', 'ada_pelepasan_satwa_c15', 'spesies_c15', 'spesies_lainnya_c15', 'jumlah_individu_c15', 'asal_usul_c15', 'longitude_c15', 'latitude_c15', 'keterangan_c15'],
             'C.16' => ['tahun_c16', 'bulan_c16', 'satuan_kerja_c16', 'ada_kelahiran_satwa_c16', 'spesies_c16', 'spesies_lainnya_c16', 'tanggal_kelahiran_c16', 'usulan_nama_satwa_c16', 'jantan_c16', 'betina_c16', 'belum_diketahui_c16', 'longitude_c16', 'latitude_c16', 'keterangan_c16'],
             'C.17' => ['tahun_c17', 'bulan_c17', 'satuan_kerja_c17', 'ada_kematian_satwa_c17', 'spesies_c17', 'spesies_lainnya_c17', 'tanggal_kematian_c17', 'perkiraan_usia_c17', 'penyebab_kematian_c17', 'penyebab_kematian_lainnya_c17', 'jantan_c17', 'betina_c17', 'belum_diketahui_c17', 'upaya_penanganan_c17', 'longitude_c17', 'latitude_c17', 'keterangan_c17'],
-=======
-<<<<<<< HEAD
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
         ];
     }
-=======
-            'B.02' => ['tahun_b02', 'kawasan_nama_b02', 'ada_akses_b02', 'jenis_pengelolaan_b02', 'jenis_akses_b02', 'jenis_dimanfaatkan_b02', 'nama_kelompok_b02', 'masyarakat_hukum_adat_b02', 'jumlah_laki_b02', 'jumlah_perempuan_b02', 'kabupaten_b02', 'kecamatan_b02', 'desa_b02', 'nomor_surat_dirjen_b02', 'nomor_pks_b02', 'tanggal_mulai_ks_b02', 'tanggal_akhir_pks_b02', 'luas_area_b02', 'zona_blok_b02', 'dokumen_kerjasama_b02', 'shapefile_kerjasama_b02'],
-        ];}
->>>>>>> temp-fix
 
     private function fileUploadConfig(): array
     {
@@ -506,42 +497,11 @@ class KonservasiController extends Controller
         return $details;
     }
 
-    private function uploadConfiguration(): array
-    {
-        return [
-            'sk_parsial_file' => ['folder' => 'dokumen_sk', 'rules' => 'mimes:pdf|max:2048'],
-            'sk_provinsi_file' => ['folder' => 'dokumen_sk', 'rules' => 'mimes:pdf|max:2048'],
-            'sk_penetapan_file' => ['folder' => 'dokumen_sk', 'rules' => 'mimes:pdf|max:2048'],
-            'shapefile_zip' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'sk_rpjp_file' => ['folder' => 'dokumen_rpjp', 'rules' => 'mimes:pdf|max:20480'],
-            'dokumen_batb' => ['folder' => 'dokumen_batb', 'rules' => 'mimes:pdf|max:20480'],
-            'shapefile_monitoring_zip' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'file_dokumen_evaluasi' => ['folder' => 'dokumen_evaluasi', 'rules' => 'mimes:pdf|max:20480'],
-            'shapefile_ekosistem_zip' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'file_sk_zonasi' => ['folder' => 'dokumen_zonasi', 'rules' => 'mimes:pdf|max:2048'],
-            'shapefile_zonasi_zip' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'dokumen_d03' => ['folder' => 'dokumen_desain_tapak', 'rules' => 'mimes:pdf|max:10240'],
-            'shapefile_d03' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'foto_odtwa' => ['folder' => 'foto_odtwa', 'rules' => 'image|mimes:jpg,jpeg,png|max:1024'],
-            'dokumen_perizinan_pbp_d06' => ['folder' => 'dokumen_perizinan', 'rules' => 'mimes:pdf|max:2048'],
-            'shapefile_pbp_d06' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'foto_sarana_prasarana_d07' => ['folder' => 'foto_sarana_prasarana', 'rules' => 'image|mimes:jpg,jpeg,png|max:1024', 'multiple' => true],
-            'shapefile_d10' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'dokumen_sk_d11' => ['folder' => 'dokumen_sk', 'rules' => 'mimes:pdf|max:2048'],
-            'shapefile_d11' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'dokumen_perizinan_d14' => ['folder' => 'dokumen_perizinan', 'rules' => 'mimes:pdf|max:2048'],
-            'shapefile_d14' => ['folder' => 'shapefiles', 'rules' => 'mimes:zip|max:10240'],
-            'dokumen_perizinan_c02' => ['folder' => 'dokumen_perizinan', 'rules' => 'mimes:pdf|max:2048'],
-            'dokumen_perizinan_c04' => ['folder' => 'dokumen_perizinan', 'rules' => 'mimes:pdf|max:2048'],
-            'dokumen_perizinan_c06' => ['folder' => 'dokumen_perizinan', 'rules' => 'mimes:pdf|max:2048'],
-        ];
-    }
-
     private function uploadFieldsForSubBidang(string $kodeSubBidang): array
     {
         $fields = $this->fieldsBySubBidang()[$kodeSubBidang] ?? [];
 
-        return array_intersect_key($this->uploadConfiguration(), array_flip($fields));
+        return array_intersect_key($this->fileUploadConfig(), array_flip($fields));
     }
 
     private function uploadValidationRules(array $uploadFields): array
@@ -550,15 +510,23 @@ class KonservasiController extends Controller
 
         foreach ($uploadFields as $field => $configuration) {
             if ($configuration['multiple'] ?? false) {
-                $rules[$field] = 'nullable|array|max:3';
-                $rules[$field . '.*'] = $configuration['rules'];
+                $requiredIf = $configuration['required_if'] ?? null;
+                $rules[$field] = ($requiredIf
+                    ? 'required_if:' . implode(',', $requiredIf) . '|'
+                    : 'nullable|') . 'array|max:' . $configuration['max_files'];
+                $rules[$field . '.*'] = 'file|mimes:' . $configuration['mimes'] . '|max:' . $configuration['max'];
                 continue;
             }
 
-            $rules[$field] = 'nullable|' . $configuration['rules'];
+            $rules[$field] = 'nullable|file|mimes:' . $configuration['mimes'] . '|max:' . $configuration['max'];
         }
 
         return $rules;
+    }
+
+    private function uploadValidationMessages(): array
+    {
+        return $this->fileUploadMessages();
     }
 
     private function formFieldLabel(string $field): string
@@ -720,29 +688,8 @@ class KonservasiController extends Controller
     // Proses Simpan Data
     public function store(Request $request)
     {
-        $request->validate(array_merge([
+        $request->validate([
             'sub_bidang_id'             => 'required|exists:ref_sub_bidang,id',
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-            'sk_parsial_file'           => 'nullable|mimes:pdf|max:2048',
-            'sk_provinsi_file'          => 'nullable|mimes:pdf|max:2048',
-            'sk_penetapan_file'         => 'nullable|mimes:pdf|max:2048',
-            'shapefile_zip'             => 'nullable|mimes:zip|max:10240',
-            'sk_rpjp_file'              => 'nullable|mimes:pdf|max:20480',
-            'dokumen_batb'              => 'nullable|mimes:pdf|max:20480',
-            'shapefile_monitoring_zip'  => 'nullable|mimes:zip|max:10240',
-            'file_dokumen_evaluasi'     => 'nullable|mimes:pdf|max:20480',
-            'shapefile_ekosistem_zip'   => 'nullable|mimes:zip|max:10240',
-            'file_sk_zonasi'            => 'nullable|mimes:pdf|max:2048',
-            'shapefile_zonasi_zip'      => 'nullable|mimes:zip|max:10240',
-            'dokumen_d03'               => 'nullable|mimes:pdf|max:10240',
-            'shapefile_d03'             => 'nullable|mimes:zip|max:10240',
-            'dokumen_perizinan_c02'     => 'nullable|mimes:pdf|max:2048',
-            'dokumen_perizinan_c04'     => 'nullable|mimes:pdf|max:2048',
-            'dokumen_perizinan_c06'     => 'nullable|mimes:pdf|max:2048',
->>>>>>> temp-fix
             'tahun_b02' => 'nullable|integer|min:2000|max:2100',
             'ada_akses_b02' => 'nullable|in:ya,tidak',
             'jenis_pengelolaan_b02' => 'required_if:ada_akses_b02,ya|nullable|in:akses_tradisional,kemitraan_konservasi',
@@ -761,22 +708,11 @@ class KonservasiController extends Controller
             'tanggal_akhir_pks_b02' => 'required_if:ada_akses_b02,ya|nullable|date|after_or_equal:tanggal_mulai_ks_b02',
             'luas_area_b02' => 'required_if:ada_akses_b02,ya|nullable|numeric|min:0',
             'zona_blok_b02' => 'required_if:ada_akses_b02,ya|nullable|string|max:255',
-<<<<<<< HEAD
-        ], $this->fileUploadRules()), $this->fileUploadMessages());
-=======
-            'dokumen_kerjasama_b02' => 'nullable|mimes:pdf|max:2048',
-            'shapefile_kerjasama_b02' => 'nullable|mimes:zip|max:10240',
-        ], [
-            'sk_parsial_file.uploaded' => 'File SK parsial gagal diunggah. Pastikan file PDF berukuran maksimal 2 MB, atau kosongkan lampiran untuk menyimpan data tanpa file.',
-            'sk_parsial_file.mimes' => 'File SK parsial harus berformat PDF.',
-            'sk_parsial_file.max' => 'Ukuran file SK parsial maksimal 2 MB.',
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
         ]);
->>>>>>> temp-fix
 
         $subBidang = SubBidang::findOrFail($request->sub_bidang_id);
         $uploadFields = $this->uploadFieldsForSubBidang($subBidang->kode_sub);
-        $request->validate($this->uploadValidationRules($uploadFields));
+        $request->validate($this->uploadValidationRules($uploadFields), $this->uploadValidationMessages());
         $yearFields = [
             'A.01' => 'tahun',
             'A.02' => 'tahun_rpjp',
@@ -785,10 +721,7 @@ class KonservasiController extends Controller
             'A.05' => 'tahun_ekosistem',
             'A.06' => 'tahun_zonasi',
             'B.01' => 'tahun_b01',
-<<<<<<< HEAD
             'B.02' => 'tahun_b02',
-=======
->>>>>>> temp-fix
             'C.01' => 'tahun_c01',
             'C.02' => 'tahun_c02',
             'C.03' => 'tahun_c03',
@@ -801,16 +734,9 @@ class KonservasiController extends Controller
             'C.11' => 'tahun_c11',
             'C.12' => 'tahun_c12',
             'C.14' => 'tahun_c14',
-<<<<<<< HEAD
             'C.15' => 'tahun_c15',
             'C.16' => 'tahun_c16',
             'C.17' => 'tahun_c17',
-=======
-<<<<<<< HEAD
-=======
-            'B.02' => 'tahun_b02',
->>>>>>> temp-fix
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
         ];
         $tahun = $request->input($yearFields[$subBidang->kode_sub] ?? '', date('Y'));
 
@@ -821,12 +747,9 @@ class KonservasiController extends Controller
             'B.01' => $request->filled('jumlah_laki') || $request->filled('jumlah_perempuan')
                 ? (int) $request->input('jumlah_laki', 0) + (int) $request->input('jumlah_perempuan', 0)
                 : null,
-<<<<<<< HEAD
             'B.02' => $request->filled('jumlah_laki_b02') || $request->filled('jumlah_perempuan_b02')
                 ? (int) $request->input('jumlah_laki_b02', 0) + (int) $request->input('jumlah_perempuan_b02', 0)
                 : null,
-=======
->>>>>>> temp-fix
             'C.03' => $request->input('ada_data_koleksi_c03') === 'ya'
                 ? (int) $request->input('jantan_c03', 0) + (int) $request->input('betina_c03', 0) + (int) $request->input('belum_diketahui_c03', 0)
                 : null,
@@ -842,7 +765,6 @@ class KonservasiController extends Controller
             'C.14' => $request->input('ada_interaksi_negatif_c14') === 'ya'
                 ? (int) $request->input('jumlah_individu_c14', 0)
                 : null,
-<<<<<<< HEAD
             'C.15' => $request->input('ada_pelepasan_satwa_c15') === 'ya'
                 ? (int) $request->input('jumlah_individu_c15', 0)
                 : null,
@@ -852,14 +774,6 @@ class KonservasiController extends Controller
             'C.17' => $request->input('ada_kematian_satwa_c17') === 'ya'
                 ? (int) $request->input('jantan_c17', 0) + (int) $request->input('betina_c17', 0) + (int) $request->input('belum_diketahui_c17', 0)
                 : null,
-=======
-<<<<<<< HEAD
-=======
-            'B.02' => $request->filled('jumlah_laki_b02') || $request->filled('jumlah_perempuan_b02')
-                ? (int) $request->input('jumlah_laki_b02', 0) + (int) $request->input('jumlah_perempuan_b02', 0)
-                : null,
->>>>>>> temp-fix
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
             default => null,
         };
 
@@ -879,36 +793,10 @@ class KonservasiController extends Controller
             $details[] = $label . ': ' . ($value === 'on' ? 'Ya' : $value);
         }
 
-<<<<<<< HEAD
         foreach ($uploadFields as $inputName => $configuration) {
             if (!$request->hasFile($inputName)) {
                 continue;
             }
-=======
-<<<<<<< HEAD
-        $details = array_merge($details, $this->storeUploadedFiles($request, $subBidang->kode_sub));
-=======
-        $fileInputs = [
-            'sk_parsial_file'           => 'dokumen_sk',
-            'sk_provinsi_file'          => 'dokumen_sk',
-            'sk_penetapan_file'         => 'dokumen_sk',
-            'shapefile_zip'             => 'shapefiles',
-            'sk_rpjp_file'              => 'dokumen_rpjp',
-            'dokumen_batb'              => 'dokumen_batb',
-            'shapefile_monitoring_zip'  => 'shapefiles',
-            'file_dokumen_evaluasi'     => 'dokumen_evaluasi',
-            'shapefile_ekosistem_zip'   => 'shapefiles',
-            'file_sk_zonasi'            => 'dokumen_zonasi',
-            'shapefile_zonasi_zip'      => 'shapefiles',
-            'dokumen_d03'               => 'dokumen_desain_tapak',
-            'shapefile_d03'             => 'shapefiles',
-            'dokumen_perizinan_c02'     => 'dokumen_perizinan',
-            'dokumen_perizinan_c04'     => 'dokumen_perizinan',
-            'dokumen_perizinan_c06'     => 'dokumen_perizinan',
-            'dokumen_kerjasama_b02'     => 'dokumen_kerjasama',
-            'shapefile_kerjasama_b02'   => 'shapefiles',
-        ];
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
 
             $files = $request->file($inputName);
             $files = is_array($files) ? $files : [$files];
@@ -922,9 +810,10 @@ class KonservasiController extends Controller
                 $details[] = $this->formFieldLabel($inputName) . ': ' . implode(', ', $storedPaths);
             }
         }
->>>>>>> temp-fix
 
         $keteranganFinal = count($details) > 0 ? implode(' | ', $details) : '-';
+        $latitude = $this->coordinateInput($request, 'latitude');
+        $longitude = $this->coordinateInput($request, 'longitude');
 
         $payload = [
             'sub_bidang_id' => $request->sub_bidang_id,
@@ -937,24 +826,8 @@ class KonservasiController extends Controller
                 ?? $request->input('bulan_c11')
                 ?? $request->input('bulan_c01')
                 ?? $request->bulan,
-            'latitude'      => $request->input('latitude_c17')
-                ?? $request->input('latitude_c16')
-                ?? $request->input('latitude_c15')
-                ?? $request->input('latitude_c14')
-                ?? $request->input('latitude_c06')
-                ?? $request->input('latitude_c04')
-                ?? $request->input('latitude_c02')
-                ?? $request->input('latitude_c01')
-                ?? $request->latitude,
-            'longitude'     => $request->input('longitude_c17')
-                ?? $request->input('longitude_c16')
-                ?? $request->input('longitude_c15')
-                ?? $request->input('longitude_c14')
-                ?? $request->input('longitude_c06')
-                ?? $request->input('longitude_c04')
-                ?? $request->input('longitude_c02')
-                ?? $request->input('longitude_c01')
-                ?? $request->longitude,
+            'latitude'      => $latitude,
+            'longitude'     => $longitude,
             'jumlah'        => $jumlah,
             'keterangan'    => $keteranganFinal,
         ];
@@ -965,7 +838,68 @@ class KonservasiController extends Controller
 
         DataKonservasi::create($payload);
 
-        return redirect()->route('konservasi.index')->with('success', 'Data Konservasi Berhasil Disimpan ke Sistem SIDAK!');
+        return redirect()->route('konservasi.index')->with('success', 'Data konservasi berhasil disimpan ke SINTUVU - Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah.');
+    }
+
+    private function coordinateInput(Request $request, string $coordinate): ?string
+    {
+        foreach (array_keys($request->all()) as $inputName) {
+            if (($inputName === $coordinate || str_starts_with($inputName, $coordinate . '_'))
+                && $request->filled($inputName)) {
+                return (string) $request->input($inputName);
+            }
+        }
+
+        return null;
+    }
+
+    // Sajikan file unggahan dari record milik pengguna yang sedang login.
+    public function showFile(Request $request, $id)
+    {
+        $query = DataKonservasi::with('subBidang');
+
+        if (Schema::hasColumn('data_konservasi', 'user_id')) {
+            $query->where('user_id', auth()->id());
+        }
+
+        $item = $query->findOrFail($id);
+        $path = (string) $request->query('path', '');
+        $allowedFolders = array_unique(array_column($this->fileUploadConfig(), 'folder'));
+        $isUploadPath = false;
+
+        foreach ($allowedFolders as $folder) {
+            if (str_starts_with($path, $folder . '/')) {
+                $isUploadPath = true;
+                break;
+            }
+        }
+
+        abort_unless(
+            $isUploadPath && !str_contains($path, '..') && !str_contains($path, '\\'),
+            404
+        );
+
+        $storedPaths = [];
+        foreach (explode(' | ', (string) $item->keterangan) as $detailLine) {
+            $separator = strpos($detailLine, ': ');
+            if ($separator === false) {
+                continue;
+            }
+
+            foreach (explode(', ', substr($detailLine, $separator + 2)) as $storedPath) {
+                $storedPaths[] = trim($storedPath);
+            }
+        }
+
+        abort_unless(in_array($path, $storedPaths, true), 404);
+
+        $disk = Storage::disk('public');
+        abort_unless($disk->exists($path), 404);
+
+        return $disk->response($path, basename($path), [
+            'Content-Type' => $disk->mimeType($path) ?: 'application/octet-stream',
+            'X-Content-Type-Options' => 'nosniff',
+        ], 'inline');
     }
 
     // Proses Hapus Data
@@ -1038,15 +972,7 @@ class KonservasiController extends Controller
                 'kode' => $subBidang->kode_sub,
                 'nama' => $subBidang->nama_sub_bidang,
                 'nama_bidang' => $subBidang->bidang->nama_bidang ?? 'Bidang tidak diketahui',
-                'satuan' => match ($subBidang->kode_sub) {
-                    'A.03' => 'pal',
-                    'B.01' => 'orang',
-                    'B.02' => 'orang',
-                    default => 'unit',
-                },
                 'jumlah_entri' => 0,
-                'jumlah_volume' => 0,
-                'entri_bervolume' => 0,
             ];
         }
 
@@ -1068,10 +994,6 @@ class KonservasiController extends Controller
             }
 
             $subBidangStats[$subBidang->id]['jumlah_entri']++;
-            if ($item->jumlah !== null) {
-                $subBidangStats[$subBidang->id]['jumlah_volume'] += (float) $item->jumlah;
-                $subBidangStats[$subBidang->id]['entri_bervolume']++;
-            }
         }
 
         foreach ($subBidangStats as $subStat) {
@@ -1085,25 +1007,20 @@ class KonservasiController extends Controller
             $subBidangStats,
             fn ($subStat) => $subStat['jumlah_entri'] > 0
         ));
-        $volumeChart = array_values(array_filter(
-            $subBidangStats,
-            fn ($subStat) => $subStat['entri_bervolume'] > 0
-        ));
         $totalSubBidangTerisi = count($subBidangChart);
         $totalSubBidang = array_sum(array_column($bidangDefinitions, 'total_subbidang'));
-        $totalEntriBervolume = $allData->filter(fn ($item) => $item->jumlah !== null)->count();
+        $totalEntriDenganNilai = $allData->filter(fn ($item) => $item->jumlah !== null)->count();
 
         $recentData = (clone $userQuery)->with('subBidang.bidang')->latest()->take(5)->get();
 
         return view('konservasi.dashboard', compact(
             'totalData',
             'totalLokasi',
-            'totalEntriBervolume',
+            'totalEntriDenganNilai',
             'totalSubBidangTerisi',
             'totalSubBidang',
             'bidangChart',
             'subBidangChart',
-            'volumeChart',
             'recentData'
         ));
     }
@@ -1144,7 +1061,7 @@ class KonservasiController extends Controller
     // Proses Update Data
     public function update(Request $request, $id)
     {
-        $request->validate(array_merge([
+        $request->validate([
             'bidang_id'     => 'required|exists:ref_bidang,id',
             'sub_bidang_id' => 'required|exists:ref_sub_bidang,id',
             'tahun'         => 'nullable|numeric',
@@ -1154,23 +1071,7 @@ class KonservasiController extends Controller
             'tahun_ekosistem' => 'nullable|numeric',
             'tahun_zonasi'  => 'nullable|numeric',
             'tahun_b01'     => 'nullable|numeric',
-<<<<<<< HEAD
-=======
             'tahun_b02'     => 'nullable|numeric',
-<<<<<<< HEAD
-=======
-            'sk_parsial_file' => 'nullable|mimes:pdf|max:2048',
-            'sk_provinsi_file' => 'nullable|mimes:pdf|max:2048',
-            'sk_penetapan_file' => 'nullable|mimes:pdf|max:2048',
-            'shapefile_zip' => 'nullable|mimes:zip|max:10240',
-            'sk_rpjp_file'  => 'nullable|mimes:pdf|max:20480',
-            'dokumen_batb'  => 'nullable|mimes:pdf|max:20480',
-            'shapefile_monitoring_zip' => 'nullable|mimes:zip|max:10240',
-            'file_dokumen_evaluasi' => 'nullable|mimes:pdf|max:20480',
-            'shapefile_ekosistem_zip' => 'nullable|mimes:zip|max:10240',
-            'file_sk_zonasi' => 'nullable|mimes:pdf|max:2048',
-            'shapefile_zonasi_zip' => 'nullable|mimes:zip|max:10240',
->>>>>>> temp-fix
             'ada_akses_b02' => 'nullable|in:ya,tidak',
             'jenis_pengelolaan_b02' => 'required_if:ada_akses_b02,ya|nullable|in:akses_tradisional,kemitraan_konservasi',
             'jenis_akses_b02' => 'required_if:ada_akses_b02,ya|nullable|string|max:255',
@@ -1188,14 +1089,7 @@ class KonservasiController extends Controller
             'tanggal_akhir_pks_b02' => 'required_if:ada_akses_b02,ya|nullable|date|after_or_equal:tanggal_mulai_ks_b02',
             'luas_area_b02' => 'required_if:ada_akses_b02,ya|nullable|numeric|min:0',
             'zona_blok_b02' => 'required_if:ada_akses_b02,ya|nullable|string|max:255',
-<<<<<<< HEAD
-        ], $this->fileUploadRules()), $this->fileUploadMessages());
-=======
-            'dokumen_kerjasama_b02' => 'nullable|mimes:pdf|max:2048',
-            'shapefile_kerjasama_b02' => 'nullable|mimes:zip|max:10240',
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
         ]);
->>>>>>> temp-fix
 
         $query = DataKonservasi::query();
 
@@ -1211,7 +1105,7 @@ class KonservasiController extends Controller
         }
 
         $uploadFields = $this->uploadFieldsForSubBidang($subBidang->kode_sub);
-        $request->validate($this->uploadValidationRules($uploadFields));
+        $request->validate($this->uploadValidationRules($uploadFields), $this->uploadValidationMessages());
 
         $fieldsBySubBidang = $this->fieldsBySubBidang();
         $fields = $fieldsBySubBidang[$subBidang->kode_sub] ?? [];
@@ -1229,7 +1123,10 @@ class KonservasiController extends Controller
             $details[] = $this->formFieldLabel($field) . ': ' . ($value === 'on' ? 'Ya' : $value);
         }
 
-<<<<<<< HEAD
+        if (!$request->exists('keterangan') && filled($detailValues['keterangan'] ?? null)) {
+            $details[] = $this->formFieldLabel('keterangan') . ': ' . $detailValues['keterangan'];
+        }
+
         foreach ($uploadFields as $field => $configuration) {
             if ($request->hasFile($field)) {
                 $files = $request->file($field);
@@ -1246,33 +1143,6 @@ class KonservasiController extends Controller
             if (!empty($detailValues[$field])) {
                 $details[] = $this->formFieldLabel($field) . ': ' . $detailValues[$field];
             }
-=======
-        if (!$request->exists('keterangan') && filled($detailValues['keterangan'] ?? null)) {
-            $details[] = $this->formFieldLabel('keterangan') . ': ' . $detailValues['keterangan'];
-        }
-<<<<<<< HEAD
-=======
-
-        $fileInputs = [
-            'sk_parsial_file' => 'dokumen_sk',
-            'sk_provinsi_file' => 'dokumen_sk',
-            'sk_penetapan_file' => 'dokumen_sk',
-            'shapefile_zip' => 'shapefiles',
-            'sk_rpjp_file' => 'dokumen_rpjp',
-            'dokumen_batb' => 'dokumen_batb',
-            'shapefile_monitoring_zip' => 'shapefiles',
-            'file_dokumen_evaluasi' => 'dokumen_evaluasi',
-            'shapefile_ekosistem_zip' => 'shapefiles',
-            'file_sk_zonasi' => 'dokumen_zonasi',
-            'shapefile_zonasi_zip' => 'shapefiles',
-            'dokumen_kerjasama_b02' => 'dokumen_kerjasama',
-            'shapefile_kerjasama_b02' => 'shapefiles',
-        ];
->>>>>>> temp-fix
-
-        foreach ($this->storeUploadedFiles($request, $subBidang->kode_sub, $detailValues) as $uploadedDetail) {
-            $details[] = $uploadedDetail;
->>>>>>> 23d71526497aa8bc1353a93efea120528a1f5a59
         }
 
         $yearFields = [

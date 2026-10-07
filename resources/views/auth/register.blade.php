@@ -1,7 +1,7 @@
-<x-guest-layout :title="'Daftar Akun - SIDAK BKSDA Sulawesi Tengah'">
+<x-guest-layout :title="'Daftar Akun - SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah'">
 
     <span class="auth-badge"><span class="dot"></span> BUAT AKUN BARU</span>
-    <h1>Daftar ke <em>SIDAK</em></h1>
+    <h1>Daftar ke <em>SINTUVU</em></h1>
     <p class="sub">Lengkapi data berikut untuk membuat akun petugas baru.</p>
 
     <form method="POST" action="{{ route('register') }}">

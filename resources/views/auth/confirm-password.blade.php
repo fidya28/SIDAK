@@ -1,4 +1,4 @@
-<x-guest-layout :title="'Konfirmasi Password - SIDAK BKSDA Sulawesi Tengah'">
+<x-guest-layout :title="'Konfirmasi Password - SINTUVU | Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah'">
 
     <span class="auth-badge"><span class="dot"></span> AREA AMAN</span>
     <h1>Konfirmasi <em>password</em></h1>
