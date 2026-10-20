@@ -115,7 +115,7 @@
                     <span class="text-xs text-slate-500">Sulawesi Tengah</span>
                 </div>
                 <h2 class="font-extrabold text-2xl text-slate-900 tracking-tight">
-                    Peta GIS
+                    GIS
                 </h2>
                 <p class="text-xs text-slate-500 mt-1">
                     Visualisasi batas interaktif kawasan hutan konservasi dan titik pemantauan Balai KSDA Sulawesi Tengah

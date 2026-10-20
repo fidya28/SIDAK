@@ -36,6 +36,21 @@
 
     @php
         // Array Daftar 18 Kawasan Konservasi BKSDA Sulteng
+        $jabatanStrukturalF01 = [
+            ['label' => 'STRUKTURAL I-A', 'key' => 'struktural_i_a'],
+            ['label' => 'STRUKTURAL I-B', 'key' => 'struktural_i_b'],
+            ['label' => 'STRUKTURAL II-A', 'key' => 'struktural_ii_a'],
+            ['label' => 'STRUKTURAL II-B', 'key' => 'struktural_ii_b'],
+            ['label' => 'STRUKTURAL III-A', 'key' => 'struktural_iii_a'],
+            ['label' => 'STRUKTURAL III-B', 'key' => 'struktural_iii_b'],
+            ['label' => 'STRUKTURAL IV-A', 'key' => 'struktural_iv_a'],
+            ['label' => 'STRUKTURAL IV-B', 'key' => 'struktural_iv_b'],
+        ];
+        $jabatanFungsionalF01 = [
+            ['label' => 'FUNGSIONAL KHUSUS', 'key' => 'fungsional_khusus'],
+            ['label' => 'CALON FUNGSIONAL KHUSUS', 'key' => 'calon_fungsional_khusus'],
+            ['label' => 'FUNGSIONAL UMUM', 'key' => 'fungsional_umum'],
+        ];
         $kawasanList = [
             'TWA Wera (Satker: Balai KSDA Sulawesi Tengah)',
             'SM Tanjung Santigi (Satker: Balai KSDA Sulawesi Tengah)',
@@ -178,7 +193,7 @@
         <!-- CARD CONTAINER FORM -->
         <div class="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-sm"
              x-data="{ 
-                 selectedSubBidangKode: '', 
+                 selectedSubBidangKode: @js($oldSubBidang?->kode_sub ?? ''),
                  adaPerubahan: 'tidak', 
                  skProvinsiTersedia: 'tidak',
                  skPenetapanTersedia: 'tidak',
@@ -190,6 +205,7 @@
                  adaPengesahanD03: '',
                  adaKegiatanB01: 'ya',
                  adaAksesB02: 'ya',
+                 kerjaSamaBaruF07: @js(old('perjanjian_baru_f07', '')),
                  adaDataLembagaC02: '',
                  bentukLembagaC02: '',
                  bentukLembagaUmumC02: ['Kebun Binatang', 'Taman Safari', 'Taman Satwa', 'Taman Satwa Khusus', 'Museum Zoologi', 'Kebun Botani', 'Taman Tumbuhan Khusus', 'Herbarium'],
@@ -250,7 +266,7 @@
                             <select id="bidang_select" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:bg-white text-xs font-medium transition shadow-xs">
                                 <option value="">-- Pilih Bidang Utama --</option>
                                 @foreach ($bidang as $b)
-                                    <option value="{{ $b->id }}">{{ $b->nama_bidang }}</option>
+                                    <option value="{{ $b->id }}" {{ $oldBidangId == $b->id ? 'selected' : '' }}>{{ $b->nama_bidang }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -260,11 +276,679 @@
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                                 Sub-Bidang Kategori <span class="text-rose-500">*</span>
                             </label>
-                            <select name="sub_bidang_id" id="sub_bidang_select" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:bg-white text-xs font-medium transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed" disabled required>
+                            <select name="sub_bidang_id" id="sub_bidang_select" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600 focus:bg-white text-xs font-medium transition shadow-xs disabled:opacity-50 disabled:cursor-not-allowed" {{ $oldSubBidang ? '' : 'disabled' }} required>
                                 <option value="">-- Pilih Bidang Terlebih Dahulu --</option>
+                                @if($oldSubBidang)
+                                    <option value="{{ $oldSubBidang->id }}" data-kode="{{ $oldSubBidang->kode_sub }}" data-nama="{{ $oldSubBidang->nama_sub_bidang }}" selected>
+                                        {{ $oldSubBidang->kode_sub }}. {{ $oldSubBidang->nama_sub_bidang }}
+                                    </option>
+                                @endif
                             </select>
                         </div>
                     </div>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.01: Sebaran PNS/CPNS Menurut Jabatan dan Jenis Kelamin -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.01'" x-transition class="space-y-8 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.01'" class="space-y-8">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="tahun_f01" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Tahun: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="tahun_f01" name="tahun_f01" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" {{ old('tahun_f01') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="satuan_kerja_f01" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Satuan Kerja: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="satuan_kerja_f01" name="satuan_kerja_f01" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih satuan kerja</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" {{ old('satuan_kerja_f01') === 'Balai KSDA Sulawesi Tengah' ? 'selected' : '' }}>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <section class="space-y-5">
+                            <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Jabatan Struktural</h3>
+                            @foreach ($jabatanStrukturalF01 as $jabatan)
+                                <fieldset class="rounded-xl border border-slate-200 bg-white px-5 pb-5 pt-2 shadow-sm">
+                                    <legend class="px-2 text-sm font-bold text-forest-600">{{ $jabatan['label'] }}</legend>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                                        @foreach (['laki' => 'Laki-laki', 'perempuan' => 'Perempuan'] as $gender => $genderLabel)
+                                            @php $fieldName = $jabatan['key'] . '_' . $gender . '_f01'; @endphp
+                                            <div>
+                                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-slate-700 mb-2">
+                                                    {{ $genderLabel }}: <span class="text-rose-500">*</span>
+                                                </label>
+                                                <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                                    <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Jumlah</span>
+                                                    <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                    <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Orang</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+                            @endforeach
+                        </section>
+
+                        <section class="space-y-5">
+                            <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Jabatan Fungsional Umum &amp; Tertentu</h3>
+                            @foreach ($jabatanFungsionalF01 as $jabatan)
+                                <fieldset class="rounded-xl border border-slate-200 bg-white px-5 pb-5 pt-2 shadow-sm">
+                                    <legend class="px-2 text-sm font-bold text-forest-600">{{ $jabatan['label'] }}</legend>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                                        @foreach (['laki' => 'Laki-laki', 'perempuan' => 'Perempuan'] as $gender => $genderLabel)
+                                            @php $fieldName = $jabatan['key'] . '_' . $gender . '_f01'; @endphp
+                                            <div>
+                                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-slate-700 mb-2">
+                                                    {{ $genderLabel }}: <span class="text-rose-500">*</span>
+                                                </label>
+                                                <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                                    <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Jumlah</span>
+                                                    <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                    <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Orang</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+                            @endforeach
+                        </section>
+
+                        <div>
+                            <label for="keterangan_f01" class="block text-sm font-bold text-slate-700 mb-2">Keterangan:</label>
+                            <textarea id="keterangan_f01" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">{{ old('keterangan') }}</textarea>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.02: Sebaran PNS/CPNS Menurut Tingkat Pendidikan dan Jenis Kelamin -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.02'" x-transition class="space-y-6 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.02'" class="space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="tahun_f02" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Tahun: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="tahun_f02" name="tahun_f02" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" {{ old('tahun_f02') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="satuan_kerja_f02" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Satuan Kerja: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="satuan_kerja_f02" name="satuan_kerja_f02" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih satuan kerja</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" {{ old('satuan_kerja_f02') === 'Balai KSDA Sulawesi Tengah' ? 'selected' : '' }}>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            @foreach ($jenjangPendidikanF02 as $jenjang)
+                                <fieldset class="rounded-xl border border-slate-200 bg-white px-5 pb-5 pt-2 shadow-sm">
+                                    <legend class="px-2 text-sm font-bold text-forest-600">{{ $jenjang['label'] }}</legend>
+                                    <div class="space-y-5 pt-2">
+                                        @foreach (['laki' => 'Laki-laki', 'perempuan' => 'Perempuan'] as $gender => $genderLabel)
+                                            @php $fieldName = $jenjang['key'] . '_' . $gender . '_f02'; @endphp
+                                            <div>
+                                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-slate-700 mb-2">
+                                                    {{ $genderLabel }}: <span class="text-rose-500">*</span>
+                                                </label>
+                                                <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                                    <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Jumlah</span>
+                                                    <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                    <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Orang</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+                            @endforeach
+                        </div>
+
+                        <div>
+                            <label for="keterangan_f02" class="block text-sm font-bold text-slate-700 mb-2">Keterangan:</label>
+                            <textarea id="keterangan_f02" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">{{ old('keterangan') }}</textarea>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.03: Sebaran PNS/CPNS Menurut Golongan dan Jenis Kelamin -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.03'" x-transition class="space-y-6 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.03'" class="space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="tahun_f03" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Tahun: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="tahun_f03" name="tahun_f03" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" {{ old('tahun_f03') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="satuan_kerja_f03" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Satuan Kerja: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="satuan_kerja_f03" name="satuan_kerja_f03" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih satuan kerja</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" {{ old('satuan_kerja_f03') === 'Balai KSDA Sulawesi Tengah' ? 'selected' : '' }}>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            @foreach ($golonganF03 as $golongan)
+                                <fieldset class="rounded-xl border border-slate-200 bg-white px-5 pb-5 pt-2 shadow-sm">
+                                    <legend class="px-2 text-sm font-bold text-forest-600">{{ $golongan['label'] }}</legend>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                                        @foreach (['laki' => 'Laki-laki', 'perempuan' => 'Perempuan'] as $gender => $genderLabel)
+                                            @php $fieldName = $golongan['key'] . '_' . $gender . '_f03'; @endphp
+                                            <div>
+                                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-slate-700 mb-2">
+                                                    {{ $genderLabel }}: <span class="text-rose-500">*</span>
+                                                </label>
+                                                <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                                    <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Jumlah</span>
+                                                    <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                    <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Orang</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+                            @endforeach
+                        </div>
+
+                        <div>
+                            <label for="keterangan_f03" class="block text-sm font-bold text-slate-700 mb-2">Keterangan:</label>
+                            <textarea id="keterangan_f03" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">{{ old('keterangan') }}</textarea>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.04: Sebaran Pejabat Fungsional Tertentu Menurut Fungsi dan Jenis Kelamin -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.04'" x-transition class="space-y-6 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.04'" class="space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="tahun_f04" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Tahun: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="tahun_f04" name="tahun_f04" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" {{ old('tahun_f04') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="satuan_kerja_f04" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Satuan Kerja: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="satuan_kerja_f04" name="satuan_kerja_f04" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih satuan kerja</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" {{ old('satuan_kerja_f04') === 'Balai KSDA Sulawesi Tengah' ? 'selected' : '' }}>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="jenis_jabatan_fungsional_f04" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Jenis Jabatan Fungsional: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="jenis_jabatan_fungsional_f04" name="jenis_jabatan_fungsional_f04" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih jenis jabatan</option>
+                                    @foreach ($jenisJabatanFungsionalF04 as $jenisJabatan)
+                                        <option value="{{ $jenisJabatan }}" {{ old('jenis_jabatan_fungsional_f04') === $jenisJabatan ? 'selected' : '' }}>{{ $jenisJabatan }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            @foreach (['laki' => 'Laki-laki', 'perempuan' => 'Perempuan'] as $gender => $genderLabel)
+                                @php $fieldName = $gender . '_f04'; @endphp
+                                <div>
+                                    <label for="{{ $fieldName }}" class="block text-xs font-semibold text-slate-700 mb-2">
+                                        {{ $genderLabel }}: <span class="text-rose-500">*</span>
+                                    </label>
+                                    <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                        <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Jumlah</span>
+                                        <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                        <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Orang</span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div>
+                            <label for="keterangan_f04" class="block text-sm font-bold text-slate-700 mb-2">Keterangan:</label>
+                            <textarea id="keterangan_f04" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">{{ old('keterangan') }}</textarea>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.05: Sebaran Pejabat Fungsional Menurut Fungsi, Tingkat Pendidikan dan Jenis Kelamin -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.05'" x-transition class="space-y-6 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.05'" class="space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="tahun_f05" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Tahun: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="tahun_f05" name="tahun_f05" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" {{ old('tahun_f05') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="satuan_kerja_f05" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Satuan Kerja: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="satuan_kerja_f05" name="satuan_kerja_f05" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih satuan kerja</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" {{ old('satuan_kerja_f05') === 'Balai KSDA Sulawesi Tengah' ? 'selected' : '' }}>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="jenis_jabatan_fungsional_f05" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Jenis Jabatan Fungsional Tertentu: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="jenis_jabatan_fungsional_f05" name="jenis_jabatan_fungsional_f05" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih jenis jabatan</option>
+                                    @foreach ($jenisJabatanFungsionalF04 as $jenisJabatan)
+                                        <option value="{{ $jenisJabatan }}" {{ old('jenis_jabatan_fungsional_f05') === $jenisJabatan ? 'selected' : '' }}>{{ $jenisJabatan }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            @foreach ($jenjangPendidikanF02 as $jenjang)
+                                <fieldset class="rounded-xl border border-slate-200 bg-white px-5 pb-5 pt-2 shadow-sm">
+                                    <legend class="px-2 text-sm font-bold text-forest-600">{{ $jenjang['label'] }}</legend>
+                                    <div class="space-y-5 pt-2">
+                                        @foreach (['laki' => 'Laki-laki', 'perempuan' => 'Perempuan'] as $gender => $genderLabel)
+                                            @php $fieldName = $jenjang['key'] . '_' . $gender . '_f05'; @endphp
+                                            <div>
+                                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-slate-700 mb-2">
+                                                    {{ $genderLabel }}: <span class="text-rose-500">*</span>
+                                                </label>
+                                                <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                                    <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Jumlah</span>
+                                                    <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                    <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Orang</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+                            @endforeach
+                        </div>
+
+                        <div>
+                            <label for="keterangan_f05" class="block text-sm font-bold text-slate-700 mb-2">Keterangan:</label>
+                            <textarea id="keterangan_f05" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">{{ old('keterangan') }}</textarea>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.06: Sebaran ASN P3K menurut Tingkat Pendidikan dan Jenis Kelamin -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.06'" x-transition class="space-y-6 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.06'" class="space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="tahun_f06" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Tahun: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="tahun_f06" name="tahun_f06" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" {{ old('tahun_f06') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="satuan_kerja_f06" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Satuan Kerja: <span class="text-rose-500">*</span>
+                                </label>
+                                <select id="satuan_kerja_f06" name="satuan_kerja_f06" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih satuan kerja</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" {{ old('satuan_kerja_f06') === 'Balai KSDA Sulawesi Tengah' ? 'selected' : '' }}>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            @foreach ($jenjangPendidikanF06 as $jenjang)
+                                <fieldset class="rounded-xl border border-slate-200 bg-white px-5 pb-5 pt-2 shadow-sm">
+                                    <legend class="px-2 text-sm font-bold text-forest-600">{{ $jenjang['label'] }}</legend>
+                                    <div class="space-y-5 pt-2">
+                                        @foreach (['laki' => 'Laki-laki', 'perempuan' => 'Perempuan'] as $gender => $genderLabel)
+                                            @php $fieldName = $jenjang['key'] . '_' . $gender . '_f06'; @endphp
+                                            <div>
+                                                <label for="{{ $fieldName }}" class="block text-xs font-semibold text-slate-700 mb-2">
+                                                    {{ $genderLabel }}: <span class="text-rose-500">*</span>
+                                                </label>
+                                                <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                                    <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Jumlah</span>
+                                                    <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                    <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-xs text-slate-600">Orang</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </fieldset>
+                            @endforeach
+                        </div>
+
+                        <div>
+                            <label for="keterangan_f06" class="block text-sm font-bold text-slate-700 mb-2">Keterangan:</label>
+                            <textarea id="keterangan_f06" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">{{ old('keterangan') }}</textarea>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.07 / Kerja Sama Teknik -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.07'" x-transition class="space-y-6 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.07'" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label for="tahun_f07" class="block text-xs font-bold text-slate-700 mb-2">Tahun: <span class="text-rose-500">*</span></label>
+                                <select id="tahun_f07" name="tahun_f07" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" @selected(old('tahun_f07') == $year)>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="periode_semester_f07" class="block text-xs font-bold text-slate-700 mb-2">Periode: <span class="text-rose-500">*</span></label>
+                                <select id="periode_semester_f07" name="periode_semester_f07" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih periode</option>
+                                    @foreach (['Semester I', 'Semester II'] as $semester)
+                                        <option value="{{ $semester }}" @selected(old('periode_semester_f07') === $semester)>{{ $semester }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label for="satuan_kerja_f07" class="block text-xs font-bold text-slate-700 mb-2">Eselon II / UPT: <span class="text-rose-500">*</span></label>
+                                <select id="satuan_kerja_f07" name="satuan_kerja_f07" required class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                    <option value="">Pilih Eselon II / UPT</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" @selected(old('satuan_kerja_f07') === 'Balai KSDA Sulawesi Tengah')>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <fieldset class="rounded-xl border border-slate-200 bg-white p-5">
+                            <legend class="px-2 text-sm font-bold text-forest-700">Perjanjian Kerja Sama Baru / Nihil <span class="text-rose-500">*</span></legend>
+                            <div class="flex flex-wrap gap-x-8 gap-y-3">
+                                <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-700">
+                                    <input type="radio" name="perjanjian_baru_f07" value="ya" x-model="kerjaSamaBaruF07" required class="text-forest-600 focus:ring-forest-600">
+                                    Ya, ada perjanjian baru
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-xs font-medium text-slate-700">
+                                    <input type="radio" name="perjanjian_baru_f07" value="tidak" x-model="kerjaSamaBaruF07" required class="text-forest-600 focus:ring-forest-600">
+                                    Nihil
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div x-cloak x-show="kerjaSamaBaruF07 === 'ya'" x-transition>
+                            <fieldset :disabled="kerjaSamaBaruF07 !== 'ya'" class="space-y-6">
+                                <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900">
+                                    Entri ini untuk riwayat perjanjian pertama (BARU). Perpanjangan atau perubahan perjanjian berikutnya dicatat melalui Detail PKS.
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-2">Jenis Dokumen Kerja Sama: <span class="text-rose-500">*</span></label>
+                                    <div class="flex flex-wrap gap-x-8 gap-y-3">
+                                        @foreach (['PKS', 'MOU', 'Potensi'] as $jenisDokumen)
+                                            <label class="inline-flex items-center gap-2 text-xs text-slate-700">
+                                                <input type="radio" name="jenis_dokumen_f07" value="{{ $jenisDokumen }}" @checked(old('jenis_dokumen_f07') === $jenisDokumen) x-bind:required="kerjaSamaBaruF07 === 'ya'" class="text-forest-600 focus:ring-forest-600">
+                                                {{ $jenisDokumen }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <p class="mt-2 text-[11px] text-slate-500">Pilih Potensi apabila kerja sama masih dalam proses permohonan.</p>
+                                </div>
+
+                                <section class="space-y-5">
+                                    <h4 class="border-b border-slate-200 pb-2 text-xs font-extrabold uppercase tracking-wider text-slate-800">Informasi Mitra</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div>
+                                            <label for="nama_mitra_f07" class="block text-xs font-bold text-slate-700 mb-2">Nama Mitra Kerja Sama: <span class="text-rose-500">*</span></label>
+                                            <input id="nama_mitra_f07" type="text" name="nama_mitra_f07" value="{{ old('nama_mitra_f07') }}" x-bind:required="kerjaSamaBaruF07 === 'ya'" maxlength="255" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                        </div>
+                                        <div>
+                                            <label for="tipe_mitra_f07" class="block text-xs font-bold text-slate-700 mb-2">Tipe Mitra: <span class="text-rose-500">*</span></label>
+                                            <select id="tipe_mitra_f07" name="tipe_mitra_f07" x-bind:required="kerjaSamaBaruF07 === 'ya'" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none">
+                                                <option value="">Pilih tipe mitra</option>
+                                                @foreach ($tipeMitraF07 as $tipeMitra)
+                                                    <option value="{{ $tipeMitra }}" @selected(old('tipe_mitra_f07') === $tipeMitra)>{{ $tipeMitra }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <fieldset class="rounded-xl border border-slate-200 px-5 pb-5 pt-1">
+                                    <legend class="px-2 text-sm font-bold uppercase tracking-wide text-slate-800">Informasi Kerja Sama</legend>
+                                    <div class="space-y-6 pt-3">
+                                        <div>
+                                            <span class="block text-sm font-semibold text-slate-700 mb-2">Status Kerja Sama: <span class="text-rose-500">*</span></span>
+                                            <div class="flex flex-col items-start gap-2.5" role="group" aria-label="Status Kerja Sama">
+                                                @foreach (['Aktif', 'Berakhir', 'Masa Perpanjangan', 'Potensi', 'Proses Perpanjangan'] as $status)
+                                                    <label class="inline-flex items-center gap-3 text-sm font-medium text-slate-700">
+                                                        <input type="radio" name="status_kerja_sama_f07" value="{{ $status }}" @checked(old('status_kerja_sama_f07') === $status) x-bind:required="kerjaSamaBaruF07 === 'ya'" class="h-5 w-5 border-slate-300 text-blue-600 focus:ring-blue-500">
+                                                        {{ $status }}
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1 gap-5 md:grid-cols-12">
+                                            <div class="md:col-span-6">
+                                                <label for="nomor_perjanjian_f07" class="block text-sm font-semibold text-slate-700 mb-2">Nomor Perjanjian: <span class="text-rose-500">*</span></label>
+                                                <input id="nomor_perjanjian_f07" type="text" name="nomor_perjanjian_f07" value="{{ old('nomor_perjanjian_f07') }}" x-bind:required="kerjaSamaBaruF07 === 'ya'" maxlength="255" placeholder="Nomor surat" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-600">
+                                                <p class="mt-1 text-xs text-slate-500">Contoh: PKS.123/BKSDA/2024.</p>
+                                            </div>
+                                            <div class="md:col-span-3">
+                                                <label for="tanggal_mulai_f07" class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Mulai: <span class="text-rose-500">*</span></label>
+                                                <input id="tanggal_mulai_f07" type="date" name="tanggal_mulai_f07" value="{{ old('tanggal_mulai_f07') }}" x-bind:required="kerjaSamaBaruF07 === 'ya'" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600">
+                                            </div>
+                                            <div class="md:col-span-3">
+                                                <label for="tanggal_berakhir_f07" class="block text-sm font-semibold text-slate-700 mb-2">Tanggal Berakhir: <span class="text-rose-500">*</span></label>
+                                                <input id="tanggal_berakhir_f07" type="date" name="tanggal_berakhir_f07" value="{{ old('tanggal_berakhir_f07') }}" x-bind:required="kerjaSamaBaruF07 === 'ya'" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600">
+                                            </div>
+                                            <div class="md:col-span-12">
+                                                <label for="judul_kerja_sama_f07" class="block text-sm font-semibold text-slate-700 mb-2">Judul Kerja Sama: <span class="text-rose-500">*</span></label>
+                                                <input id="judul_kerja_sama_f07" type="text" name="judul_kerja_sama_f07" value="{{ old('judul_kerja_sama_f07') }}" x-bind:required="kerjaSamaBaruF07 === 'ya'" maxlength="500" placeholder="Judul kerja sama" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-600">
+                                            </div>
+                                            <div class="md:col-span-12">
+                                                <label for="ruang_lingkup_f07" class="block text-sm font-semibold text-slate-700 mb-2">Ruang Lingkup: <span class="text-rose-500">*</span></label>
+                                                <textarea id="ruang_lingkup_f07" name="ruang_lingkup_f07" rows="4" x-bind:required="kerjaSamaBaruF07 === 'ya'" placeholder="Ruang lingkup kerja sama" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-600">{{ old('ruang_lingkup_f07') }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+
+                                <section class="space-y-2">
+                                    <label for="dukungan_klhk_search_f07" class="block text-sm font-semibold text-slate-700">Dukungan Kinerja KLHK (referensi):</label>
+                                    <div x-data="{ open: false, query: '', selected: @js(array_values((array) old('dukungan_klhk_f07', []))) }" @click.outside="open = false" class="relative">
+                                        <div @click="$refs.klhkSearch.focus()" class="flex min-h-14 flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-white p-2 focus-within:border-forest-600 focus-within:ring-2 focus-within:ring-forest-600">
+                                            <template x-for="option in selected" :key="option">
+                                                <span class="inline-flex max-w-full items-center gap-2 rounded-full bg-blue-600 px-3 py-1.5 text-sm font-medium text-white">
+                                                    <span class="break-all" x-text="option"></span>
+                                                    <button type="button" @click.stop="selected = selected.filter((item) => item !== option)" :aria-label="'Hapus ' + option" class="shrink-0 text-lg leading-none hover:text-blue-100">&times;</button>
+                                                </span>
+                                            </template>
+                                            <input id="dukungan_klhk_search_f07" x-ref="klhkSearch" type="search" x-model="query" @focus="open = true" @click="open = true" placeholder="Cari IKSS / IKP / IKK..." class="min-w-[12rem] flex-1 border-0 bg-transparent px-2 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        </div>
+                                        <p class="mt-1 text-sm text-slate-500">Pilih indikator dari referensi (terstruktur, boleh lebih dari satu).</p>
+                                        <div x-cloak x-show="open" x-transition class="absolute z-30 mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                                            <div role="listbox" aria-multiselectable="true" class="max-h-64 overflow-y-auto space-y-1">
+                                                @foreach ($indikatorKlhkF07 as $indikator)
+                                                    <label x-show="@js(mb_strtolower($indikator)).includes(query.toLowerCase())" class="flex cursor-pointer items-start gap-2 rounded-lg px-2 py-2 text-xs leading-relaxed text-slate-700 hover:bg-slate-50">
+                                                        <input type="checkbox" name="dukungan_klhk_f07[]" value="{{ $indikator }}" x-model="selected" class="mt-0.5 rounded text-forest-600 focus:ring-forest-600">
+                                                        <span>{{ $indikator }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div class="md:col-span-2">
+                                            <label for="catatan_dukungan_f07" class="block text-sm font-semibold text-slate-700 mb-2">Catatan Dukungan Kinerja (teks bebas):</label>
+                                            <textarea id="catatan_dukungan_f07" name="catatan_dukungan_f07" rows="3" placeholder="Catatan IK/IKP/IKK bila belum tersedia di referensi.." class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-600">{{ old('catatan_dukungan_f07') }}</textarea>
+                                        </div>
+                                        <div>
+                                            <label for="luas_area_f07" class="block text-sm font-semibold text-slate-700 mb-2">Luas Area:</label>
+                                            <div class="flex overflow-hidden rounded-xl border border-slate-300 bg-white">
+                                                <input id="luas_area_f07" type="number" min="0" step="0.01" name="luas_area_f07" value="{{ old('luas_area_f07') }}" class="w-full min-w-0 border-0 px-4 py-3 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-4 text-sm text-slate-600">Ha</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="nilai_komitmen_f07" class="block text-sm font-semibold text-slate-700 mb-2">Nilai Komitmen Pendanaan:</label>
+                                            <div class="flex overflow-hidden rounded-xl border border-slate-300 bg-white">
+                                                <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-4 text-sm text-slate-600">Rp</span>
+                                                <input id="nilai_komitmen_f07" type="number" min="0" step="0.01" name="nilai_komitmen_f07" value="{{ old('nilai_komitmen_f07') }}" class="w-full min-w-0 border-0 px-4 py-3 text-sm focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-4 text-sm text-slate-600">,00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <div>
+                                    <label for="dokumen_kerja_sama_f07" class="block text-sm font-semibold text-slate-700 mb-2">Dokumen Kerja Sama (pdf):</label>
+                                    <input id="dokumen_kerja_sama_f07" type="file" name="dokumen_kerja_sama_f07" accept=".pdf,application/pdf" class="w-full text-xs file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 border border-slate-300 bg-white rounded-xl">
+                                    <p class="mt-1 text-sm text-slate-500"><i class="fa-solid fa-circle-info mr-1"></i> Format PDF · maks 20 MB.</p>
+                                </div>
+
+                                <section class="space-y-5">
+                                    <h4 class="border-b border-slate-200 pb-2 text-xs font-extrabold uppercase tracking-wider text-slate-800">Lokasi Kerja Sama</h4>
+                                    <div x-data="{ open: false, query: '', selected: @js(array_values((array) old('provinsi_f07', []))) }" @click.outside="open = false" class="relative">
+                                        <label for="provinsi_search_f07" class="block text-sm font-semibold text-slate-700 mb-2">Provinsi: <span class="text-rose-500">*</span></label>
+                                        <div @click="$refs.provinceSearch.focus()" class="flex min-h-14 flex-wrap items-center gap-2 rounded-xl border border-slate-300 bg-white p-2 focus-within:border-forest-600 focus-within:ring-2 focus-within:ring-forest-600">
+                                            <template x-for="option in selected" :key="option">
+                                                <span class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+                                                    <span x-text="option"></span>
+                                                    <button type="button" @click.stop="selected = selected.filter((item) => item !== option)" :aria-label="'Hapus ' + option" class="shrink-0 text-lg leading-none hover:text-blue-100">&times;</button>
+                                                </span>
+                                            </template>
+                                            <input id="provinsi_search_f07" x-ref="provinceSearch" type="search" x-model="query" @focus="open = true" @click="open = true" placeholder="Cari provinsi..." class="min-w-[10rem] flex-1 border-0 bg-transparent px-2 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                                        </div>
+                                        <div x-cloak x-show="open" x-transition class="absolute z-30 mt-2 w-full rounded-xl border border-slate-200 bg-white p-3 shadow-xl">
+                                            <div role="listbox" aria-multiselectable="true" class="grid max-h-64 grid-cols-1 gap-1 overflow-y-auto sm:grid-cols-2">
+                                                @foreach ($provinsiF07 as $provinsi)
+                                                    <label x-show="@js(mb_strtolower($provinsi)).includes(query.toLowerCase())" class="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-xs text-slate-700 hover:bg-slate-50">
+                                                        <input type="checkbox" name="provinsi_f07[]" value="{{ $provinsi }}" x-model="selected" class="rounded text-forest-600 focus:ring-forest-600">
+                                                        {{ $provinsi }}
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="lokasi_detail_f07" class="block text-sm font-semibold text-slate-700 mb-2">Lokasi Detail:</label>
+                                        <textarea id="lokasi_detail_f07" name="lokasi_detail_f07" rows="3" placeholder="Masukan detail lokasi kerjasama disini.." class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-600">{{ old('lokasi_detail_f07') }}</textarea>
+                                    </div>
+                                    <div>
+                                        <p class="mb-2 text-sm font-medium text-slate-700">Data area/lokasi kerjasama tersedia dalam bentuk (point/polygon)?</p>
+                                        <label for="shapefile_f07" class="block text-base font-semibold text-slate-700">Unggah Point/Polygon Area (shapefile):</label>
+                                        <p class="mb-3 mt-1 text-sm text-slate-600">ESRI Shapefile terdiri dari file dengan ekstensi .shp, .dbf, .prj, .shx, dan .cpg yang dikompres menjadi ekstensi .Zip</p>
+                                        <input id="shapefile_f07" type="file" name="shapefile_f07" accept=".zip,application/zip" class="w-full text-xs file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-emerald-700 border border-slate-300 bg-white rounded-xl">
+                                    </div>
+                                </section>
+
+                                <p class="rounded-xl border border-slate-200 bg-slate-100 p-5 text-sm leading-relaxed text-slate-600">
+                                    <i class="fa-solid fa-circle-info mr-2 text-blue-600"></i>
+                                    Data capaian &amp; evaluasi (output, outcome, dampak, estimasi manfaat) <strong>tidak diisi di sini</strong> – diisi belakangan lewat <strong>Evaluasi Tahunan</strong> (per RKT) dan <strong>Capaian Umum</strong> (Detail PKS).
+                                </p>
+                                <div>
+                                    <label for="keterangan_f07" class="mb-2 block text-base font-semibold text-slate-700">Keterangan:</label>
+                                    <textarea id="keterangan_f07" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-600">{{ old('keterangan') }}</textarea>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <!-- FORM DINAMIS SUB-BIDANG F.08: Perijinan Masuk Kawasan Konservasi -->
+                <div x-cloak x-show="selectedSubBidangKode === 'F.08'" x-transition class="space-y-6 pt-2">
+                    <fieldset :disabled="selectedSubBidangKode !== 'F.08'" class="space-y-8">
+                        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                            <div>
+                                <label for="tahun_f08" class="mb-2 block text-sm font-semibold text-slate-700">Tahun: <span class="text-rose-500">*</span></label>
+                                <select id="tahun_f08" name="tahun_f08" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600">
+                                    <option value="">Pilih tahun</option>
+                                    @for ($year = 2026; $year >= 1945; $year--)
+                                        <option value="{{ $year }}" @selected(old('tahun_f08') == $year)>{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label for="periode_bulan_f08" class="mb-2 block text-sm font-semibold text-slate-700">Periode Bulan: <span class="text-rose-500">*</span></label>
+                                <select id="periode_bulan_f08" name="periode_bulan_f08" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600">
+                                    <option value="">Pilih periode</option>
+                                    @foreach (['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'] as $index => $bulan)
+                                        <option value="{{ $index + 1 }}" @selected(old('periode_bulan_f08') == $index + 1)>{{ $bulan }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="satuan_kerja_f08" class="mb-2 block text-sm font-semibold text-slate-700">Satuan Kerja: <span class="text-rose-500">*</span></label>
+                                <select id="satuan_kerja_f08" name="satuan_kerja_f08" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-forest-600">
+                                    <option value="">Pilih satuan kerja</option>
+                                    <option value="Balai KSDA Sulawesi Tengah" @selected(old('satuan_kerja_f08') === 'Balai KSDA Sulawesi Tengah')>Balai KSDA Sulawesi Tengah</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        @foreach ([
+                            'penelitian' => 'PENELITIAN DAN PENGEMBANGAN',
+                            'pendidikan' => 'PENDIDIKAN DAN ILMU PENGETAHUAN',
+                            'foto_video' => 'PENGAMBILAN FOTO DAN VIDEO',
+                            'lain_lain' => 'LAIN-LAIN',
+                        ] as $kategori => $judulKategori)
+                            <fieldset class="rounded-xl border border-slate-200 bg-white px-5 pb-6 pt-2 shadow-lg shadow-slate-900/10">
+                                <legend class="px-2 text-sm font-extrabold text-blue-600">{{ $judulKategori }}</legend>
+                                <div class="grid grid-cols-1 gap-5 pt-3 md:grid-cols-2">
+                                    @foreach (['dalam_negeri' => 'Dalam Negeri', 'luar_negeri' => 'Luar Negeri'] as $wilayah => $labelWilayah)
+                                        @php $fieldName = 'jumlah_' . $kategori . '_' . $wilayah . '_f08'; @endphp
+                                        <div>
+                                            <label for="{{ $fieldName }}" class="mb-2 block text-sm font-semibold text-slate-700">{{ $labelWilayah }}: <span class="text-rose-500">*</span></label>
+                                            <div class="flex overflow-hidden rounded-md border border-slate-300 bg-white">
+                                                <span class="inline-flex items-center border-r border-slate-300 bg-slate-50 px-3 text-sm text-slate-600">Jumlah</span>
+                                                <input id="{{ $fieldName }}" type="number" name="{{ $fieldName }}" min="0" step="1" value="{{ old($fieldName) }}" required class="w-full min-w-0 border-0 px-3 py-2.5 text-sm text-slate-800 focus:ring-2 focus:ring-inset focus:ring-forest-600">
+                                                <span class="inline-flex items-center border-l border-slate-300 bg-slate-50 px-3 text-sm text-slate-600">Orang</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </fieldset>
+                        @endforeach
+
+                        <div>
+                            <label for="keterangan_f08" class="mb-2 block text-sm font-semibold text-slate-700">Keterangan:</label>
+                            <textarea id="keterangan_f08" name="keterangan" rows="4" placeholder="Masukan disini untuk informasi lainnya" class="w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-forest-600">{{ old('keterangan') }}</textarea>
+                        </div>
+                    </fieldset>
                 </div>
 
                 <!-- ========================================================================= -->

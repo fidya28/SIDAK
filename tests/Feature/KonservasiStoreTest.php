@@ -31,7 +31,7 @@ class KonservasiStoreTest extends TestCase
             ->assertSee('action="' . route('logout') . '"', false)
             ->assertSee('Keluar dari akun')
             ->assertSee($subBidangUrl, false)
-            ->assertDontSee('name="keterangan"', false);
+            ->assertSee('name="keterangan"', false);
 
         $this->actingAs($user)
             ->get(route('konservasi.sub-bidang', ['bidang_id' => $bidang->id]))
@@ -196,6 +196,674 @@ class KonservasiStoreTest extends TestCase
             ->assertSee('Tahun: 2025')
             ->assertSee('Nama Kelompok: Kelompok Hutan Lestari')
             ->assertSee('Pemungutan HHBK: Rotan');
+    }
+
+    public function test_f01_counts_are_required_saved_and_editable(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.01',
+            'nama_sub_bidang' => 'Sebaran PNS/CPNS Menurut Jabatan dan Jenis Kelamin',
+        ]);
+        $fields = [
+            'struktural_i_a_laki_f01', 'struktural_i_a_perempuan_f01',
+            'struktural_i_b_laki_f01', 'struktural_i_b_perempuan_f01',
+            'struktural_ii_a_laki_f01', 'struktural_ii_a_perempuan_f01',
+            'struktural_ii_b_laki_f01', 'struktural_ii_b_perempuan_f01',
+            'struktural_iii_a_laki_f01', 'struktural_iii_a_perempuan_f01',
+            'struktural_iii_b_laki_f01', 'struktural_iii_b_perempuan_f01',
+            'struktural_iv_a_laki_f01', 'struktural_iv_a_perempuan_f01',
+            'struktural_iv_b_laki_f01', 'struktural_iv_b_perempuan_f01',
+            'fungsional_khusus_laki_f01', 'fungsional_khusus_perempuan_f01',
+            'calon_fungsional_khusus_laki_f01', 'calon_fungsional_khusus_perempuan_f01',
+            'fungsional_umum_laki_f01', 'fungsional_umum_perempuan_f01',
+        ];
+        $data = array_merge([
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f01' => '2026',
+            'satuan_kerja_f01' => 'Balai KSDA Sulawesi Tengah',
+            'keterangan' => 'Data kepegawaian tahun 2026',
+        ], array_fill_keys($fields, '0'));
+        $data['struktural_i_a_laki_f01'] = '3';
+        $data['struktural_i_a_perempuan_f01'] = '2';
+        $data['fungsional_umum_laki_f01'] = '4';
+        $data['fungsional_umum_perempuan_f01'] = '1';
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.01'", false)
+            ->assertSee('name="struktural_i_a_laki_f01"', false)
+            ->assertSee('name="fungsional_umum_perempuan_f01"', false);
+
+        $this->actingAs($user)
+            ->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_diff_key($data, ['fungsional_umum_perempuan_f01' => true]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+        $this->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode: 'F.01'", false)
+            ->assertSee('id="fungsional_umum_laki_f01"', false)
+            ->assertSee('value="0"', false);
+
+        $this->post(route('konservasi.store'), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $record->tahun);
+        $this->assertSame(10, $record->jumlah);
+        $this->assertStringContainsString('Struktural I-A Laki-laki: 3', $record->keterangan);
+        $this->assertStringContainsString('Fungsional Umum Perempuan: 1', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data kepegawaian tahun 2026', $record->keterangan);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('value="3"', false)
+            ->assertSee('name="satuan_kerja_f01"', false)
+            ->assertSee('name="keterangan"', false);
+
+        $data['struktural_i_a_laki_f01'] = '6';
+        $data['bidang_id'] = $bidang->id;
+        $data['keterangan'] = 'Pembaruan data kepegawaian';
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record->refresh();
+        $this->assertSame(13, $record->jumlah);
+        $this->assertStringContainsString('Struktural I-A Laki-laki: 6', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Pembaruan data kepegawaian', $record->keterangan);
+    }
+
+    public function test_f02_education_counts_are_required_saved_and_editable(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.02',
+            'nama_sub_bidang' => 'Sebaran PNS/CPNS Menurut Tingkat Pendidikan dan Jenis Kelamin',
+        ]);
+        $fields = [
+            'doktor_s3_laki_f02', 'doktor_s3_perempuan_f02',
+            'master_s2_laki_f02', 'master_s2_perempuan_f02',
+            'sarjana_s1_laki_f02', 'sarjana_s1_perempuan_f02',
+            'diploma_d3_laki_f02', 'diploma_d3_perempuan_f02',
+            'slta_sma_laki_f02', 'slta_sma_perempuan_f02',
+            'sltp_smp_laki_f02', 'sltp_smp_perempuan_f02',
+            'sekolah_dasar_sd_laki_f02', 'sekolah_dasar_sd_perempuan_f02',
+        ];
+        $data = array_merge([
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f02' => '2026',
+            'satuan_kerja_f02' => 'Balai KSDA Sulawesi Tengah',
+            'keterangan' => 'Data pendidikan pegawai',
+        ], array_fill_keys($fields, '0'));
+        $data['doktor_s3_laki_f02'] = '2';
+        $data['sarjana_s1_perempuan_f02'] = '5';
+        $data['sekolah_dasar_sd_laki_f02'] = '1';
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.02'", false)
+            ->assertSee('name="tahun_f02"', false)
+            ->assertSee('name="satuan_kerja_f02"', false)
+            ->assertSee('name="doktor_s3_laki_f02"', false)
+            ->assertSee('name="sekolah_dasar_sd_perempuan_f02"', false);
+
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_diff_key($data, ['master_s2_perempuan_f02' => true]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+
+        $this->post(route('konservasi.store'), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $record->tahun);
+        $this->assertSame(8, $record->jumlah);
+        $this->assertStringContainsString('Doktor (S3) Laki-laki: 2', $record->keterangan);
+        $this->assertStringContainsString('Sarjana (S1) Perempuan: 5', $record->keterangan);
+        $this->assertStringContainsString('Sekolah Dasar (SD) Laki-laki: 1', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pendidikan pegawai', $record->keterangan);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('name="satuan_kerja_f02"', false)
+            ->assertSee('name="doktor_s3_laki_f02"', false)
+            ->assertSee('value="2"', false)
+            ->assertSee('name="keterangan"', false);
+
+        $data['bidang_id'] = $bidang->id;
+        $data['sarjana_s1_perempuan_f02'] = '7';
+        $data['keterangan'] = 'Data pendidikan diperbarui';
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record->refresh();
+        $this->assertSame(10, $record->jumlah);
+        $this->assertStringContainsString('Sarjana (S1) Perempuan: 7', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pendidikan diperbarui', $record->keterangan);
+    }
+
+    public function test_f03_grade_counts_are_required_saved_and_editable(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.03',
+            'nama_sub_bidang' => 'Sebaran PNS/CPNS Menurut Golongan dan Jenis Kelamin',
+        ]);
+        $fields = [
+            'golongan_iv_laki_f03', 'golongan_iv_perempuan_f03',
+            'golongan_iii_laki_f03', 'golongan_iii_perempuan_f03',
+            'golongan_ii_laki_f03', 'golongan_ii_perempuan_f03',
+            'golongan_i_laki_f03', 'golongan_i_perempuan_f03',
+        ];
+        $data = array_merge([
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f03' => '2026',
+            'satuan_kerja_f03' => 'Balai KSDA Sulawesi Tengah',
+            'keterangan' => 'Data golongan pegawai',
+        ], array_fill_keys($fields, '0'));
+        $data['golongan_iv_laki_f03'] = '3';
+        $data['golongan_iii_perempuan_f03'] = '6';
+        $data['golongan_i_laki_f03'] = '1';
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.03'", false)
+            ->assertSee('name="tahun_f03"', false)
+            ->assertSee('name="satuan_kerja_f03"', false)
+            ->assertSee('name="golongan_iv_laki_f03"', false)
+            ->assertSee('name="golongan_i_perempuan_f03"', false);
+
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_diff_key($data, ['golongan_ii_perempuan_f03' => true]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+
+        $this->post(route('konservasi.store'), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $record->tahun);
+        $this->assertSame(10, $record->jumlah);
+        $this->assertStringContainsString('Golongan IV Laki-laki: 3', $record->keterangan);
+        $this->assertStringContainsString('Golongan III Perempuan: 6', $record->keterangan);
+        $this->assertStringContainsString('Golongan I Laki-laki: 1', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data golongan pegawai', $record->keterangan);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('name="satuan_kerja_f03"', false)
+            ->assertSee('name="golongan_iv_laki_f03"', false)
+            ->assertSee('value="3"', false)
+            ->assertSee('name="keterangan"', false);
+
+        $data['bidang_id'] = $bidang->id;
+        $data['golongan_iii_perempuan_f03'] = '8';
+        $data['keterangan'] = 'Data golongan diperbarui';
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record->refresh();
+        $this->assertSame(12, $record->jumlah);
+        $this->assertStringContainsString('Golongan III Perempuan: 8', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data golongan diperbarui', $record->keterangan);
+    }
+
+    public function test_f04_functional_position_counts_are_required_saved_and_editable(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.04',
+            'nama_sub_bidang' => 'Sebaran Pejabat Fungsional Tertentu Menurut Fungsi dan Jenis Kelamin',
+        ]);
+        $data = [
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f04' => '2026',
+            'satuan_kerja_f04' => 'Balai KSDA Sulawesi Tengah',
+            'jenis_jabatan_fungsional_f04' => 'Analis Hukum',
+            'laki_f04' => '5',
+            'perempuan_f04' => '7',
+            'keterangan' => 'Data pejabat fungsional',
+        ];
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.04'", false)
+            ->assertSee('name="tahun_f04"', false)
+            ->assertSee('name="satuan_kerja_f04"', false)
+            ->assertSee('name="jenis_jabatan_fungsional_f04"', false)
+            ->assertSee('Pengelola Pengadaan Barang/Jasa');
+
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_diff_key($data, ['jenis_jabatan_fungsional_f04' => true]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+
+        $invalidData = $data;
+        $invalidData['jenis_jabatan_fungsional_f04'] = 'Jabatan tidak terdaftar';
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), $invalidData)
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+
+        $this->post(route('konservasi.store'), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $record->tahun);
+        $this->assertSame(12, $record->jumlah);
+        $this->assertStringContainsString('Jenis Jabatan Fungsional: Analis Hukum', $record->keterangan);
+        $this->assertStringContainsString('Laki-laki: 5', $record->keterangan);
+        $this->assertStringContainsString('Perempuan: 7', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pejabat fungsional', $record->keterangan);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('name="jenis_jabatan_fungsional_f04"', false)
+            ->assertSee('value="Analis Hukum" selected', false)
+            ->assertSee('name="laki_f04"', false)
+            ->assertSee('value="5"', false);
+
+        $data['bidang_id'] = $bidang->id;
+        $data['jenis_jabatan_fungsional_f04'] = 'Arsiparis';
+        $data['perempuan_f04'] = '8';
+        $data['keterangan'] = 'Data pejabat fungsional diperbarui';
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record->refresh();
+        $this->assertSame(13, $record->jumlah);
+        $this->assertStringContainsString('Jenis Jabatan Fungsional: Arsiparis', $record->keterangan);
+        $this->assertStringContainsString('Perempuan: 8', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pejabat fungsional diperbarui', $record->keterangan);
+    }
+
+    public function test_f05_functional_position_education_counts_are_required_saved_and_editable(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.05',
+            'nama_sub_bidang' => 'Sebaran Pejabat Fungsional Tertentu Menurut Fungsi, Tingkat Pendidikan dan Jenis Kelamin',
+        ]);
+        $fields = [
+            'doktor_s3_laki_f05', 'doktor_s3_perempuan_f05',
+            'master_s2_laki_f05', 'master_s2_perempuan_f05',
+            'sarjana_s1_laki_f05', 'sarjana_s1_perempuan_f05',
+            'diploma_d3_laki_f05', 'diploma_d3_perempuan_f05',
+            'slta_sma_laki_f05', 'slta_sma_perempuan_f05',
+            'sltp_smp_laki_f05', 'sltp_smp_perempuan_f05',
+            'sekolah_dasar_sd_laki_f05', 'sekolah_dasar_sd_perempuan_f05',
+        ];
+        $data = array_merge([
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f05' => '2026',
+            'satuan_kerja_f05' => 'Balai KSDA Sulawesi Tengah',
+            'jenis_jabatan_fungsional_f05' => 'Analis Hukum',
+            'keterangan' => 'Data pendidikan pejabat fungsional',
+        ], array_fill_keys($fields, '0'));
+        $data['doktor_s3_laki_f05'] = '2';
+        $data['sarjana_s1_perempuan_f05'] = '4';
+        $data['sekolah_dasar_sd_laki_f05'] = '1';
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.05'", false)
+            ->assertSee('name="tahun_f05"', false)
+            ->assertSee('name="satuan_kerja_f05"', false)
+            ->assertSee('name="jenis_jabatan_fungsional_f05"', false)
+            ->assertSee('name="doktor_s3_laki_f05"', false)
+            ->assertSee('name="sekolah_dasar_sd_perempuan_f05"', false)
+            ->assertSee('Pengelola Pengadaan Barang/Jasa');
+
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_diff_key($data, ['master_s2_perempuan_f05' => true]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+
+        $invalidData = $data;
+        $invalidData['jenis_jabatan_fungsional_f05'] = 'Jabatan tidak terdaftar';
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), $invalidData)
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+
+        $this->post(route('konservasi.store'), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $record->tahun);
+        $this->assertSame(7, $record->jumlah);
+        $this->assertStringContainsString('Jenis Jabatan Fungsional Tertentu: Analis Hukum', $record->keterangan);
+        $this->assertStringContainsString('Doktor (S3) Laki-laki: 2', $record->keterangan);
+        $this->assertStringContainsString('Sarjana (S1) Perempuan: 4', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pendidikan pejabat fungsional', $record->keterangan);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('name="jenis_jabatan_fungsional_f05"', false)
+            ->assertSee('value="Analis Hukum" selected', false)
+            ->assertSee('name="doktor_s3_laki_f05"', false)
+            ->assertSee('value="2"', false);
+
+        $data['bidang_id'] = $bidang->id;
+        $data['jenis_jabatan_fungsional_f05'] = 'Arsiparis';
+        $data['sarjana_s1_perempuan_f05'] = '6';
+        $data['keterangan'] = 'Data pendidikan diperbarui';
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record->refresh();
+        $this->assertSame(9, $record->jumlah);
+        $this->assertStringContainsString('Jenis Jabatan Fungsional Tertentu: Arsiparis', $record->keterangan);
+        $this->assertStringContainsString('Sarjana (S1) Perempuan: 6', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pendidikan diperbarui', $record->keterangan);
+    }
+
+    public function test_f06_p3k_education_counts_are_required_saved_and_editable(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.06',
+            'nama_sub_bidang' => 'Sebaran ASN P3K menurut Tingkat Pendidikan dan Jenis Kelamin',
+        ]);
+        $fields = [
+            'master_s2_laki_f06', 'master_s2_perempuan_f06',
+            'sarjana_s1_laki_f06', 'sarjana_s1_perempuan_f06',
+            'diploma_d3_laki_f06', 'diploma_d3_perempuan_f06',
+            'slta_sma_laki_f06', 'slta_sma_perempuan_f06',
+            'sltp_smp_laki_f06', 'sltp_smp_perempuan_f06',
+            'sekolah_dasar_sd_laki_f06', 'sekolah_dasar_sd_perempuan_f06',
+        ];
+        $data = array_merge([
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f06' => '2026',
+            'satuan_kerja_f06' => 'Balai KSDA Sulawesi Tengah',
+            'keterangan' => 'Data pendidikan ASN P3K',
+        ], array_fill_keys($fields, '0'));
+        $data['master_s2_laki_f06'] = '2';
+        $data['sarjana_s1_perempuan_f06'] = '4';
+        $data['sekolah_dasar_sd_laki_f06'] = '1';
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.06'", false)
+            ->assertSee('name="tahun_f06"', false)
+            ->assertSee('name="satuan_kerja_f06"', false)
+            ->assertSee('name="master_s2_laki_f06"', false)
+            ->assertSee('name="sekolah_dasar_sd_perempuan_f06"', false)
+            ->assertDontSee('name="doktor_s3_laki_f06"', false);
+
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_diff_key($data, ['master_s2_perempuan_f06' => true]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHas('errors');
+        $this->assertDatabaseCount('data_konservasi', 0);
+
+        $this->post(route('konservasi.store'), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $record->tahun);
+        $this->assertSame(7, $record->jumlah);
+        $this->assertStringContainsString('Master (S2) Laki-laki: 2', $record->keterangan);
+        $this->assertStringContainsString('Sarjana (S1) Perempuan: 4', $record->keterangan);
+        $this->assertStringContainsString('Sekolah Dasar (SD) Laki-laki: 1', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pendidikan ASN P3K', $record->keterangan);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('name="master_s2_laki_f06"', false)
+            ->assertSee('value="2"', false)
+            ->assertSee('name="keterangan"', false);
+
+        $data['bidang_id'] = $bidang->id;
+        $data['sarjana_s1_perempuan_f06'] = '6';
+        $data['keterangan'] = 'Data pendidikan ASN P3K diperbarui';
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record->refresh();
+        $this->assertSame(9, $record->jumlah);
+        $this->assertStringContainsString('Sarjana (S1) Perempuan: 6', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data pendidikan ASN P3K diperbarui', $record->keterangan);
+    }
+
+    public function test_f08_permit_counts_are_required_saved_and_editable(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.08',
+            'nama_sub_bidang' => 'Perijinan Masuk Kawasan Konservasi',
+        ]);
+
+        $countFields = [
+            'jumlah_penelitian_dalam_negeri_f08',
+            'jumlah_penelitian_luar_negeri_f08',
+            'jumlah_pendidikan_dalam_negeri_f08',
+            'jumlah_pendidikan_luar_negeri_f08',
+            'jumlah_foto_video_dalam_negeri_f08',
+            'jumlah_foto_video_luar_negeri_f08',
+            'jumlah_lain_lain_dalam_negeri_f08',
+            'jumlah_lain_lain_luar_negeri_f08',
+        ];
+        $data = array_fill_keys($countFields, '0');
+        $data = array_merge($data, [
+            'bidang_id' => $bidang->id,
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f08' => '2026',
+            'periode_bulan_f08' => '3',
+            'satuan_kerja_f08' => 'Balai KSDA Sulawesi Tengah',
+            'jumlah_penelitian_dalam_negeri_f08' => '12',
+            'jumlah_penelitian_luar_negeri_f08' => '3',
+            'jumlah_pendidikan_dalam_negeri_f08' => '8',
+            'jumlah_pendidikan_luar_negeri_f08' => '2',
+            'jumlah_foto_video_dalam_negeri_f08' => '5',
+            'jumlah_foto_video_luar_negeri_f08' => '1',
+            'jumlah_lain_lain_dalam_negeri_f08' => '4',
+            'jumlah_lain_lain_luar_negeri_f08' => '2',
+            'keterangan' => 'Data perijinan F.08',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.08'", false)
+            ->assertSee('name="periode_bulan_f08"', false)
+            ->assertSee('PENELITIAN DAN PENGEMBANGAN')
+            ->assertSee('PENDIDIKAN DAN ILMU PENGETAHUAN')
+            ->assertSee('PENGAMBILAN FOTO DAN VIDEO')
+            ->assertSee('name="jumlah_lain_lain_luar_negeri_f08"', false);
+
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_diff_key($data, ['jumlah_penelitian_dalam_negeri_f08' => true]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHasErrors('jumlah_penelitian_dalam_negeri_f08');
+
+        $this->post(route('konservasi.store'), $data)->assertRedirect(route('konservasi.index'));
+        $record = DataKonservasi::where('sub_bidang_id', $subBidang->id)->firstOrFail();
+        $this->assertSame(3, (int) $record->bulan);
+        $this->assertSame(37, (int) $record->jumlah);
+        $this->assertStringContainsString('Penelitian dan Pengembangan - Dalam Negeri: 12', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data perijinan F.08', $record->keterangan);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('name="periode_bulan_f08"', false)
+            ->assertSee('value="12"', false)
+            ->assertSee('Dalam Negeri:')
+            ->assertSee('Data perijinan F.08');
+
+        $data['periode_bulan_f08'] = '4';
+        $data['jumlah_penelitian_dalam_negeri_f08'] = '10';
+        $data['keterangan'] = 'Data perijinan F.08 diperbarui';
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+        $record->refresh();
+        $this->assertSame(4, (int) $record->bulan);
+        $this->assertSame(35, (int) $record->jumlah);
+        $this->assertStringContainsString('Penelitian dan Pengembangan - Dalam Negeri: 10', $record->keterangan);
+        $this->assertStringContainsString('Keterangan: Data perijinan F.08 diperbarui', $record->keterangan);
+    }
+
+    public function test_f07_cooperation_supports_nihil_multi_select_uploads_and_editing(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Kesekretariatan']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'F.07',
+            'nama_sub_bidang' => 'Kerja Sama Teknik Bidang KSDAE',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('konservasi.create'))
+            ->assertOk()
+            ->assertSee("selectedSubBidangKode === 'F.07'", false)
+            ->assertSee('name="provinsi_f07[]"', false)
+            ->assertSee('name="dukungan_klhk_f07[]"', false)
+            ->assertSee('x-for="option in selected"', false)
+            ->assertSee('selected = selected.filter((item) => item !== option)', false)
+            ->assertSee('&times;', false)
+            ->assertSee('@focus="open = true"', false)
+            ->assertSee('x-show="open"', false)
+            ->assertSee('name="status_kerja_sama_f07"', false)
+            ->assertDontSee('<select id="status_kerja_sama_f07"', false)
+            ->assertSee('Status Kerja Sama:', false)
+            ->assertSee('Contoh: PKS.123/BKSDA/2024.')
+            ->assertSee('Cari IKSS / IKP / IKK...')
+            ->assertSee('Pilih indikator dari referensi (terstruktur, boleh lebih dari satu).')
+            ->assertSee('Catatan Dukungan Kinerja (teks bebas):')
+            ->assertSee('ESRI Shapefile terdiri dari file dengan ekstensi .shp, .dbf, .prj, .shx, dan .cpg')
+            ->assertSee('Data capaian &amp; evaluasi', false)
+            ->assertSee('Papua Barat Daya')
+            ->assertSee('Badan Usaha Milik Daerah')
+            ->assertSee('IKK-2.1.2');
+
+        $baseData = [
+            'sub_bidang_id' => $subBidang->id,
+            'tahun_f07' => '2026',
+            'periode_semester_f07' => 'Semester I',
+            'satuan_kerja_f07' => 'Balai KSDA Sulawesi Tengah',
+            'perjanjian_baru_f07' => 'tidak',
+            'keterangan' => 'Tidak ada perjanjian baru pada semester ini',
+        ];
+        $this->post(route('konservasi.store'), $baseData)
+            ->assertRedirect(route('konservasi.index'));
+        $nihil = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $nihil->tahun);
+        $this->assertStringContainsString('Perjanjian Kerja Sama Baru: tidak', $nihil->keterangan);
+
+        $data = array_merge($baseData, [
+            'perjanjian_baru_f07' => 'ya',
+            'jenis_dokumen_f07' => 'PKS',
+            'nama_mitra_f07' => 'Mitra Uji',
+            'tipe_mitra_f07' => 'Badan Usaha Milik Negara',
+            'status_kerja_sama_f07' => 'Aktif',
+            'nomor_perjanjian_f07' => 'PKS/001/2026',
+            'tanggal_mulai_f07' => '2026-01-01',
+            'tanggal_berakhir_f07' => '2027-01-01',
+            'judul_kerja_sama_f07' => 'Konservasi habitat',
+            'ruang_lingkup_f07' => 'Perlindungan habitat satwa liar',
+            'dukungan_klhk_f07' => [
+                'IKK-2.1.2 — Persentase entitas kerja sama yang efektif, efisien, transparan, dan akuntabel',
+                'IKK-PROV-AREAL-PRESERVASI',
+            ],
+            'catatan_dukungan_f07' => 'Dukungan teknis dan pemantauan',
+            'luas_area_f07' => '12.5',
+            'nilai_komitmen_f07' => '1500000',
+            'provinsi_f07' => ['Aceh', 'Sulawesi Tengah'],
+            'lokasi_detail_f07' => 'Kabupaten Donggala',
+            'dokumen_kerja_sama_f07' => UploadedFile::fake()->create('pks.pdf', 100, 'application/pdf'),
+            'shapefile_f07' => UploadedFile::fake()->createWithContent('lokasi.zip', "PK\x03\x04"),
+        ]);
+
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_merge($data, ['provinsi_f07' => ['Provinsi Tidak Ada']]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHasErrors('provinsi_f07.0');
+        $this->from(route('konservasi.create'))
+            ->post(route('konservasi.store'), array_merge($data, [
+                'dukungan_klhk_f07' => ['Indikator Tidak Ada'],
+            ]))
+            ->assertRedirect(route('konservasi.create'))
+            ->assertSessionHasErrors('dukungan_klhk_f07.0');
+        $this->post(route('konservasi.store'), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::where('sub_bidang_id', $subBidang->id)->latest('id')->firstOrFail();
+        $this->assertStringContainsString('Tipe Mitra: Badan Usaha Milik Negara', $record->keterangan);
+        $this->assertStringContainsString('Provinsi: ["Aceh","Sulawesi Tengah"]', $record->keterangan);
+        $this->assertStringContainsString('Dukungan Kinerja KLHK (referensi): ["IKK-2.1.2', $record->keterangan);
+        $this->assertStringContainsString('Luas Area: 12.5', $record->keterangan);
+        $this->assertStringContainsString('Nilai Komitmen Pendanaan: 1500000', $record->keterangan);
+        $this->assertStringContainsString('Dokumen Kerja Sama (pdf): dokumen_kerjasama/', $record->keterangan);
+        $this->assertStringContainsString('Unggah Point/Polygon Area (shapefile): shapefiles/', $record->keterangan);
+        $uploadedFiles = Storage::disk('public')->allFiles();
+        $this->assertCount(2, $uploadedFiles);
+
+        $this->get(route('konservasi.edit', $record->id))
+            ->assertOk()
+            ->assertSee('name="dukungan_klhk_f07[]"', false)
+            ->assertSee('name="provinsi_f07[]"', false)
+            ->assertSee('x-for="option in selected"', false)
+            ->assertSee('selected = selected.filter((item) => item !== option)', false)
+            ->assertSee('&times;', false)
+            ->assertSee('@focus="open = true"', false)
+            ->assertSee('x-show="open"', false)
+            ->assertSee('role="group" aria-label="Status Kerja Sama"', false)
+            ->assertSee('INFORMASI KERJA SAMA')
+            ->assertSee('Contoh: PKS.123/BKSDA/2024.')
+            ->assertSee('Mitra Uji')
+            ->assertSee('Sulawesi Tengah');
+
+        unset($data['dokumen_kerja_sama_f07'], $data['shapefile_f07']);
+        $data['bidang_id'] = $bidang->id;
+        $data['provinsi_f07'] = ['Bali', 'Sulawesi Tengah'];
+        $this->put(route('konservasi.update', $record->id), $data)
+            ->assertRedirect(route('konservasi.index'));
+
+        $record->refresh();
+        $this->assertStringContainsString('Provinsi: ["Bali","Sulawesi Tengah"]', $record->keterangan);
+        $this->assertStringContainsString('Dokumen Kerja Sama (pdf): dokumen_kerjasama/', $record->keterangan);
+        foreach ($uploadedFiles as $path) {
+            Storage::disk('public')->assertExists($path);
+        }
+
+        $this->put(route('konservasi.update', $record->id), array_merge($baseData, [
+            'bidang_id' => $bidang->id,
+        ]))->assertRedirect(route('konservasi.index'));
+        $record->refresh();
+        $this->assertStringContainsString('Perjanjian Kerja Sama Baru: tidak', $record->keterangan);
+        $this->assertStringNotContainsString('Mitra Kerja Sama:', $record->keterangan);
+        $this->assertStringNotContainsString('Dokumen Kerja Sama:', $record->keterangan);
     }
 
     public function test_a01_rekap_shows_columns_matching_the_kawasan_konservasi_form(): void

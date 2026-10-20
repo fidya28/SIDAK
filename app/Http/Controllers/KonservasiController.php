@@ -8,6 +8,7 @@ use App\Models\DataKonservasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class KonservasiController extends Controller
@@ -56,6 +57,7 @@ class KonservasiController extends Controller
                             $termQuery->orWhere('bulan', $monthNumber)
                                 ->orWhere('bulan', (int) $monthNumber);
                         }
+
                     });
                 }
             });
@@ -283,6 +285,31 @@ class KonservasiController extends Controller
     public function create()
     {
         $bidang = Bidang::all();
+        $oldSubBidang = old('sub_bidang_id') ? SubBidang::find(old('sub_bidang_id')) : null;
+        $oldBidangId = $oldSubBidang?->bidang_id;
+        $jenjangPendidikanF02 = [
+            ['key' => 'doktor_s3', 'label' => 'Doktor (S3)'],
+            ['key' => 'master_s2', 'label' => 'Master (S2)'],
+            ['key' => 'sarjana_s1', 'label' => 'Sarjana (S1)'],
+            ['key' => 'diploma_d3', 'label' => 'Diploma (D3)'],
+            ['key' => 'slta_sma', 'label' => 'SLTA/SMA'],
+            ['key' => 'sltp_smp', 'label' => 'SLTP/SMP'],
+            ['key' => 'sekolah_dasar_sd', 'label' => 'Sekolah Dasar (SD)'],
+        ];
+        $jenjangPendidikanF06 = array_values(array_filter(
+            $jenjangPendidikanF02,
+            fn ($jenjang) => $jenjang['key'] !== 'doktor_s3'
+        ));
+        $golonganF03 = [
+            ['key' => 'golongan_iv', 'label' => 'Golongan IV'],
+            ['key' => 'golongan_iii', 'label' => 'Golongan III'],
+            ['key' => 'golongan_ii', 'label' => 'Golongan II'],
+            ['key' => 'golongan_i', 'label' => 'Golongan I'],
+        ];
+        $jenisJabatanFungsionalF04 = $this->jenisJabatanFungsionalF04();
+        $provinsiF07 = $this->provinsiF07();
+        $tipeMitraF07 = $this->tipeMitraF07();
+        $indikatorKlhkF07 = $this->indikatorKlhkF07();
         $fieldsC02 = $this->fieldsBySubBidang()['C.02'];
         $lembagaQuery = DataKonservasi::with('subBidang')
             ->whereHas('subBidang', fn ($query) => $query->where('kode_sub', 'C.02'));
@@ -357,7 +384,7 @@ class KonservasiController extends Controller
             'nama' => $nama . ' (Satker: Balai KSDA Sulawesi Tengah)',
         ])->all();
 
-        return view('konservasi.create', compact('bidang', 'kawasanKonservasi', 'lembagaKonservasiList', 'spesiesKoleksiC03', 'penangkarList', 'pengedarList', 'negaraTujuanC09'));
+        return view('konservasi.create', compact('bidang', 'kawasanKonservasi', 'lembagaKonservasiList', 'spesiesKoleksiC03', 'penangkarList', 'pengedarList', 'negaraTujuanC09', 'oldSubBidang', 'oldBidangId', 'jenjangPendidikanF02', 'jenjangPendidikanF06', 'golonganF03', 'jenisJabatanFungsionalF04', 'provinsiF07', 'tipeMitraF07', 'indikatorKlhkF07'));
     }
 
     // Mengambil Sub-Bidang Berdasarkan Bidang ID untuk Dropdown Dinamis
@@ -371,6 +398,78 @@ class KonservasiController extends Controller
     {
         return [
             'A.01' => ['tahun', 'kawasan_nama', 'ada_perubahan', 'sk_parsial_nomor', 'sk_parsial_tanggal', 'sk_parsial_luas', 'sk_parsial_file', 'sk_provinsi_tersedia', 'sk_provinsi_nomor', 'sk_provinsi_tanggal', 'sk_provinsi_luas', 'sk_provinsi_file', 'sk_penetapan_tersedia', 'sk_penetapan_nomor', 'sk_penetapan_tanggal', 'sk_penetapan_luas', 'sk_penetapan_file', 'shapefile_zip'],
+            'F.01' => [
+                'tahun_f01', 'satuan_kerja_f01',
+                'struktural_i_a_laki_f01', 'struktural_i_a_perempuan_f01',
+                'struktural_i_b_laki_f01', 'struktural_i_b_perempuan_f01',
+                'struktural_ii_a_laki_f01', 'struktural_ii_a_perempuan_f01',
+                'struktural_ii_b_laki_f01', 'struktural_ii_b_perempuan_f01',
+                'struktural_iii_a_laki_f01', 'struktural_iii_a_perempuan_f01',
+                'struktural_iii_b_laki_f01', 'struktural_iii_b_perempuan_f01',
+                'struktural_iv_a_laki_f01', 'struktural_iv_a_perempuan_f01',
+                'struktural_iv_b_laki_f01', 'struktural_iv_b_perempuan_f01',
+                'fungsional_khusus_laki_f01', 'fungsional_khusus_perempuan_f01',
+                'calon_fungsional_khusus_laki_f01', 'calon_fungsional_khusus_perempuan_f01',
+                'fungsional_umum_laki_f01', 'fungsional_umum_perempuan_f01', 'keterangan',
+            ],
+            'F.02' => [
+                'tahun_f02', 'satuan_kerja_f02',
+                'doktor_s3_laki_f02', 'doktor_s3_perempuan_f02',
+                'master_s2_laki_f02', 'master_s2_perempuan_f02',
+                'sarjana_s1_laki_f02', 'sarjana_s1_perempuan_f02',
+                'diploma_d3_laki_f02', 'diploma_d3_perempuan_f02',
+                'slta_sma_laki_f02', 'slta_sma_perempuan_f02',
+                'sltp_smp_laki_f02', 'sltp_smp_perempuan_f02',
+                'sekolah_dasar_sd_laki_f02', 'sekolah_dasar_sd_perempuan_f02',
+                'keterangan',
+            ],
+            'F.03' => [
+                'tahun_f03', 'satuan_kerja_f03',
+                'golongan_iv_laki_f03', 'golongan_iv_perempuan_f03',
+                'golongan_iii_laki_f03', 'golongan_iii_perempuan_f03',
+                'golongan_ii_laki_f03', 'golongan_ii_perempuan_f03',
+                'golongan_i_laki_f03', 'golongan_i_perempuan_f03',
+                'keterangan',
+            ],
+            'F.04' => ['tahun_f04', 'satuan_kerja_f04', 'jenis_jabatan_fungsional_f04', 'laki_f04', 'perempuan_f04', 'keterangan'],
+            'F.05' => [
+                'tahun_f05', 'satuan_kerja_f05', 'jenis_jabatan_fungsional_f05',
+                'doktor_s3_laki_f05', 'doktor_s3_perempuan_f05',
+                'master_s2_laki_f05', 'master_s2_perempuan_f05',
+                'sarjana_s1_laki_f05', 'sarjana_s1_perempuan_f05',
+                'diploma_d3_laki_f05', 'diploma_d3_perempuan_f05',
+                'slta_sma_laki_f05', 'slta_sma_perempuan_f05',
+                'sltp_smp_laki_f05', 'sltp_smp_perempuan_f05',
+                'sekolah_dasar_sd_laki_f05', 'sekolah_dasar_sd_perempuan_f05',
+                'keterangan',
+            ],
+            'F.06' => [
+                'tahun_f06', 'satuan_kerja_f06',
+                'master_s2_laki_f06', 'master_s2_perempuan_f06',
+                'sarjana_s1_laki_f06', 'sarjana_s1_perempuan_f06',
+                'diploma_d3_laki_f06', 'diploma_d3_perempuan_f06',
+                'slta_sma_laki_f06', 'slta_sma_perempuan_f06',
+                'sltp_smp_laki_f06', 'sltp_smp_perempuan_f06',
+                'sekolah_dasar_sd_laki_f06', 'sekolah_dasar_sd_perempuan_f06',
+                'keterangan',
+            ],
+            'F.07' => [
+                'tahun_f07', 'periode_semester_f07', 'satuan_kerja_f07', 'perjanjian_baru_f07',
+                'jenis_dokumen_f07', 'nama_mitra_f07', 'tipe_mitra_f07', 'status_kerja_sama_f07',
+                'nomor_perjanjian_f07', 'tanggal_mulai_f07', 'tanggal_berakhir_f07',
+                'judul_kerja_sama_f07', 'ruang_lingkup_f07', 'dukungan_klhk_f07',
+                'catatan_dukungan_f07', 'luas_area_f07', 'nilai_komitmen_f07',
+                'dokumen_kerja_sama_f07', 'provinsi_f07', 'lokasi_detail_f07', 'shapefile_f07',
+                'keterangan',
+            ],
+            'F.08' => [
+                'tahun_f08', 'periode_bulan_f08', 'satuan_kerja_f08',
+                'jumlah_penelitian_dalam_negeri_f08', 'jumlah_penelitian_luar_negeri_f08',
+                'jumlah_pendidikan_dalam_negeri_f08', 'jumlah_pendidikan_luar_negeri_f08',
+                'jumlah_foto_video_dalam_negeri_f08', 'jumlah_foto_video_luar_negeri_f08',
+                'jumlah_lain_lain_dalam_negeri_f08', 'jumlah_lain_lain_luar_negeri_f08',
+                'keterangan',
+            ],
             'A.02' => ['tahun_rpjp', 'kawasan_nama_rpjp', 'ketersediaan_rpjp', 'sk_rpjp_nomor', 'sk_rpjp_tanggal_pengesahan', 'sk_rpjp_periode_berakhir', 'sk_rpjp_file'],
             'A.03' => ['tahun_monitoring', 'kawasan_nama_monitoring', 'ada_kegiatan_monitoring', 'jenis_kegiatan', 'nomor_batb', 'tanggal_batb', 'pal_baik', 'pal_rusak', 'pal_hilang', 'pal_total', 'panjang_pal_km', 'dokumen_batb', 'shapefile_monitoring_zip'],
             'A.04' => ['tahun_evaluasi', 'kawasan_nama_evaluasi', 'ketersediaan_evaluasi', 'tanggal_pelaksanaan_evaluasi', 'rekomendasi_evaluasi', 'tindak_lanjut_evaluasi', 'file_dokumen_evaluasi'],
@@ -403,6 +502,138 @@ class KonservasiController extends Controller
         ];
     }
 
+    private function jenisJabatanFungsionalF04(): array
+    {
+        return [
+            'Analis Hukum',
+            'Analis Kebijakan',
+            'Analis Kepegawaian',
+            'Analis Pengelolaan Keuangan APBN',
+            'Analis SDM Aparatur',
+            'Arsiparis',
+            'Manggala Agni',
+            'Medik Veteriner',
+            'Pengendali Ekosistem Hutan',
+            'Penggerak Swadaya Masyarakat',
+            'Penyuluh Kehutanan',
+            'Penyuluh Lingkungan Hidup',
+            'Perancang Peraturan Perundang-undangan',
+            'Perencana',
+            'Polisi Kehutanan',
+            'Pranata Humas',
+            'Pranata Keuangan APBN',
+            'Pranata Komputer',
+            'Pranata SDM Aparatur',
+            'Pengelola Pengadaan Barang/Jasa',
+        ];
+    }
+
+    private function provinsiF07(): array
+    {
+        return [
+            'Aceh', 'Bali', 'Banten', 'Bengkulu', 'DI Yogyakarta', 'DKI Jakarta', 'Gorontalo',
+            'Jambi', 'Jawa Barat', 'Jawa Tengah', 'Jawa Timur', 'Kalimantan Barat',
+            'Kalimantan Selatan', 'Kalimantan Tengah', 'Kalimantan Timur', 'Kalimantan Utara',
+            'Kepulauan Bangka Belitung', 'Kepulauan Riau', 'Lampung', 'Maluku', 'Maluku Utara',
+            'Nusa Tenggara Barat', 'Nusa Tenggara Timur', 'Papua', 'Papua Barat',
+            'Papua Barat Daya', 'Papua Pegunungan', 'Papua Selatan', 'Papua Tengah', 'Riau',
+            'Sulawesi Barat', 'Sulawesi Selatan', 'Sulawesi Tengah', 'Sulawesi Tenggara',
+            'Sulawesi Utara', 'Sumatera Barat', 'Sumatera Selatan', 'Sumatera Utara',
+        ];
+    }
+
+    private function tipeMitraF07(): array
+    {
+        return [
+            'Badan Usaha Milik Daerah',
+            'Badan Usaha Milik Negara',
+            'Badan Usaha Milik Swasta',
+            'Koperasi',
+            'Lembaga Nirlaba (Organisasi Masyarakat)',
+            'Lembaga Nirlaba (Pendidikan dan Pelatihan)',
+            'Lembaga Nirlaba (Penelitian/Pengkajian)',
+            'Pemerintah Daerah Kab/Kota',
+            'Pemerintah Daerah Provinsi',
+            'Pemerintah Pusat (Kementerian)',
+            'Pemerintah Pusat (Lembaga Pemerintah Non-Kementerian)',
+            'Pemerintah Pusat (Sekretariat Lembaga Negara)',
+            'Pemerintah Pusat (Sekretariat Lembaga Non-Struktural)',
+        ];
+    }
+
+    private function indikatorKlhkF07(): array
+    {
+        return [
+            'IKSS-PN2-SPESIES',
+            'IKSS-PN2-EKSPOR',
+            'IKSS-PN2-PNBP',
+            'IKSS-PN6-NTE — Nilai transaksi ekonomi kelompok masyarakat kehutanan',
+            'IKP-1.1.1 — Jumlah spesies diasesmen secara nasional dalam mendukung IUCN Red List',
+            'IKP-1.1.2 — Penurunan status keterancaman spesies pada IUCN Red List',
+            'IKP-1.2.1 — Nilai transaksi ekonomi kelompok masyarakat di sekitar KSA/KPA/TB',
+            'IKP-1.3.1 — Nilai ekspor TSL dan bioprospecting',
+            'IKP-1.3.2 — Nilai PNBP dari pemanfaatan jasa lingkungan dan TSL berkelanjutan',
+            'IKK-2.1.1 — Indeks Efektivitas Perencanaan KSA/KPA/TB',
+            'IKK-2.1.2 — Persentase entitas kerja sama yang efektif, efisien, transparan, dan akuntabel',
+            'IKK-3.1.1 — Jumlah unit KSA/KPA/TB dengan kategori pengelolaan efektif',
+            'IKK-3.2.1 — Jumlah kelompok masyarakat yang dibina dalam upaya konservasi kawasan dan keanekaragaman hayati',
+            'IKK-PROV-SPS-TERDATA — Jumlah spesies yang terdata sebaran dan/atau populasinya',
+            'IKK-PROV-AREAL-PRESERVASI',
+            'IKK-PROV-PEMULIHAN-EKOSISTEM',
+            'IKK-PROV-DESA-JASLING',
+            'IKK-PROV-BIOPROSEKSI',
+            'IKK-PROV-PENGKARAN',
+            'IKK-PROV-WISATA-TICKET',
+            'IKK-PROV-KARBON',
+            'IKK-PROV-PNBP-JASLING',
+            'IKK-PROV-PNBP-TSL',
+            'IKK-PROV-SAKIP',
+            'IKK-PROV-SPIP',
+        ];
+    }
+
+    private function validateF07(Request $request): void
+    {
+        $withAgreement = $request->input('perjanjian_baru_f07') === 'ya';
+
+        $request->validate([
+            'tahun_f07' => 'required|integer|min:1945|max:2100',
+            'periode_semester_f07' => 'required|in:Semester I,Semester II',
+            'satuan_kerja_f07' => 'required|in:Balai KSDA Sulawesi Tengah',
+            'perjanjian_baru_f07' => 'required|in:ya,tidak',
+            'jenis_dokumen_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|in:PKS,MOU,Potensi',
+            'nama_mitra_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|string|max:255',
+            'tipe_mitra_f07' => ['required_if:perjanjian_baru_f07,ya', 'nullable', Rule::in($this->tipeMitraF07())],
+            'status_kerja_sama_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|in:Aktif,Berakhir,Masa Perpanjangan,Potensi,Proses Perpanjangan',
+            'nomor_perjanjian_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|string|max:255',
+            'tanggal_mulai_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|date',
+            'tanggal_berakhir_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|date|after_or_equal:tanggal_mulai_f07',
+            'judul_kerja_sama_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|string|max:500',
+            'ruang_lingkup_f07' => 'required_if:perjanjian_baru_f07,ya|nullable|string|max:5000',
+            'dukungan_klhk_f07' => 'nullable|array',
+            'dukungan_klhk_f07.*' => [Rule::in($this->indikatorKlhkF07())],
+            'catatan_dukungan_f07' => 'nullable|string|max:5000',
+            'luas_area_f07' => 'nullable|numeric|min:0',
+            'nilai_komitmen_f07' => 'nullable|numeric|min:0',
+            'provinsi_f07' => ($withAgreement ? 'required' : 'nullable') . '|array|min:1',
+            'provinsi_f07.*' => [Rule::in($this->provinsiF07())],
+            'lokasi_detail_f07' => 'nullable|string|max:2000',
+        ]);
+    }
+
+    private function validateF08(Request $request): void
+    {
+        $jumlahFields = collect($this->fieldsBySubBidang()['F.08'])
+            ->filter(fn ($field) => str_starts_with($field, 'jumlah_'))
+            ->all();
+
+        $request->validate(array_merge([
+            'tahun_f08' => 'required|integer|min:1945|max:2100',
+            'periode_bulan_f08' => 'required|integer|between:1,12',
+            'satuan_kerja_f08' => 'required|in:Balai KSDA Sulawesi Tengah',
+        ], array_fill_keys($jumlahFields, 'required|integer|min:0')));
+    }
+
     private function fileUploadConfig(): array
     {
         return [
@@ -419,6 +650,8 @@ class KonservasiController extends Controller
             'shapefile_zonasi_zip' => ['sub' => 'A.06', 'folder' => 'shapefiles', 'mimes' => 'zip', 'max' => 10240, 'label' => 'Shapefile zonasi'],
             'dokumen_kerjasama_b02' => ['sub' => 'B.02', 'folder' => 'dokumen_kerjasama', 'mimes' => 'pdf', 'max' => 10240, 'label' => 'Dokumen kerjasama B.02'],
             'shapefile_kerjasama_b02' => ['sub' => 'B.02', 'folder' => 'shapefiles', 'mimes' => 'zip', 'max' => 10240, 'label' => 'Shapefile kerjasama B.02'],
+            'dokumen_kerja_sama_f07' => ['sub' => 'F.07', 'folder' => 'dokumen_kerjasama', 'mimes' => 'pdf', 'max' => 20480, 'label' => 'Dokumen kerja sama F.07'],
+            'shapefile_f07' => ['sub' => 'F.07', 'folder' => 'shapefiles', 'mimes' => 'zip', 'max' => 10240, 'label' => 'Shapefile F.07'],
             'dokumen_perizinan_c02' => ['sub' => 'C.02', 'folder' => 'dokumen_perizinan', 'mimes' => 'pdf', 'max' => 10240, 'label' => 'Dokumen perizinan C.02'],
             'dokumen_perizinan_c04' => ['sub' => 'C.04', 'folder' => 'dokumen_perizinan', 'mimes' => 'pdf', 'max' => 10240, 'label' => 'Dokumen perizinan C.04'],
             'dokumen_perizinan_c06' => ['sub' => 'C.06', 'folder' => 'dokumen_perizinan', 'mimes' => 'pdf', 'max' => 10240, 'label' => 'Dokumen perizinan C.06'],
@@ -534,6 +767,59 @@ class KonservasiController extends Controller
         $labels = [
             'tahun' => 'Tahun', 'tahun_rpjp' => 'Tahun', 'tahun_monitoring' => 'Tahun',
             'tahun_evaluasi' => 'Tahun', 'tahun_ekosistem' => 'Tahun', 'tahun_zonasi' => 'Tahun', 'tahun_b01' => 'Tahun', 'tahun_b02' => 'Tahun',
+            'tahun_f01' => 'Tahun', 'satuan_kerja_f01' => 'Satuan Kerja',
+            'tahun_f02' => 'Tahun', 'satuan_kerja_f02' => 'Satuan Kerja',
+            'doktor_s3_laki_f02' => 'Doktor (S3) Laki-laki', 'doktor_s3_perempuan_f02' => 'Doktor (S3) Perempuan',
+            'master_s2_laki_f02' => 'Master (S2) Laki-laki', 'master_s2_perempuan_f02' => 'Master (S2) Perempuan',
+            'sarjana_s1_laki_f02' => 'Sarjana (S1) Laki-laki', 'sarjana_s1_perempuan_f02' => 'Sarjana (S1) Perempuan',
+            'diploma_d3_laki_f02' => 'Diploma (D3) Laki-laki', 'diploma_d3_perempuan_f02' => 'Diploma (D3) Perempuan',
+            'slta_sma_laki_f02' => 'SLTA/SMA Laki-laki', 'slta_sma_perempuan_f02' => 'SLTA/SMA Perempuan',
+            'sltp_smp_laki_f02' => 'SLTP/SMP Laki-laki', 'sltp_smp_perempuan_f02' => 'SLTP/SMP Perempuan',
+            'sekolah_dasar_sd_laki_f02' => 'Sekolah Dasar (SD) Laki-laki', 'sekolah_dasar_sd_perempuan_f02' => 'Sekolah Dasar (SD) Perempuan',
+            'tahun_f03' => 'Tahun', 'satuan_kerja_f03' => 'Satuan Kerja',
+            'golongan_iv_laki_f03' => 'Golongan IV Laki-laki', 'golongan_iv_perempuan_f03' => 'Golongan IV Perempuan',
+            'golongan_iii_laki_f03' => 'Golongan III Laki-laki', 'golongan_iii_perempuan_f03' => 'Golongan III Perempuan',
+            'golongan_ii_laki_f03' => 'Golongan II Laki-laki', 'golongan_ii_perempuan_f03' => 'Golongan II Perempuan',
+            'golongan_i_laki_f03' => 'Golongan I Laki-laki', 'golongan_i_perempuan_f03' => 'Golongan I Perempuan',
+            'tahun_f04' => 'Tahun', 'satuan_kerja_f04' => 'Satuan Kerja',
+            'jenis_jabatan_fungsional_f04' => 'Jenis Jabatan Fungsional',
+            'laki_f04' => 'Laki-laki', 'perempuan_f04' => 'Perempuan',
+            'tahun_f05' => 'Tahun', 'satuan_kerja_f05' => 'Satuan Kerja',
+            'jenis_jabatan_fungsional_f05' => 'Jenis Jabatan Fungsional Tertentu',
+            'doktor_s3_laki_f05' => 'Doktor (S3) Laki-laki', 'doktor_s3_perempuan_f05' => 'Doktor (S3) Perempuan',
+            'master_s2_laki_f05' => 'Master (S2) Laki-laki', 'master_s2_perempuan_f05' => 'Master (S2) Perempuan',
+            'sarjana_s1_laki_f05' => 'Sarjana (S1) Laki-laki', 'sarjana_s1_perempuan_f05' => 'Sarjana (S1) Perempuan',
+            'diploma_d3_laki_f05' => 'Diploma (D3) Laki-laki', 'diploma_d3_perempuan_f05' => 'Diploma (D3) Perempuan',
+            'slta_sma_laki_f05' => 'SLTA/SMA Laki-laki', 'slta_sma_perempuan_f05' => 'SLTA/SMA Perempuan',
+            'sltp_smp_laki_f05' => 'SLTP/SMP Laki-laki', 'sltp_smp_perempuan_f05' => 'SLTP/SMP Perempuan',
+            'sekolah_dasar_sd_laki_f05' => 'Sekolah Dasar (SD) Laki-laki', 'sekolah_dasar_sd_perempuan_f05' => 'Sekolah Dasar (SD) Perempuan',
+            'tahun_f06' => 'Tahun', 'satuan_kerja_f06' => 'Satuan Kerja',
+            'master_s2_laki_f06' => 'Master (S2) Laki-laki', 'master_s2_perempuan_f06' => 'Master (S2) Perempuan',
+            'sarjana_s1_laki_f06' => 'Sarjana (S1) Laki-laki', 'sarjana_s1_perempuan_f06' => 'Sarjana (S1) Perempuan',
+            'diploma_d3_laki_f06' => 'Diploma (D3) Laki-laki', 'diploma_d3_perempuan_f06' => 'Diploma (D3) Perempuan',
+            'slta_sma_laki_f06' => 'SLTA/SMA Laki-laki', 'slta_sma_perempuan_f06' => 'SLTA/SMA Perempuan',
+            'sltp_smp_laki_f06' => 'SLTP/SMP Laki-laki', 'sltp_smp_perempuan_f06' => 'SLTP/SMP Perempuan',
+            'sekolah_dasar_sd_laki_f06' => 'Sekolah Dasar (SD) Laki-laki', 'sekolah_dasar_sd_perempuan_f06' => 'Sekolah Dasar (SD) Perempuan',
+            'tahun_f08' => 'Tahun', 'periode_bulan_f08' => 'Periode Bulan', 'satuan_kerja_f08' => 'Satuan Kerja',
+            'jumlah_penelitian_dalam_negeri_f08' => 'Penelitian dan Pengembangan - Dalam Negeri',
+            'jumlah_penelitian_luar_negeri_f08' => 'Penelitian dan Pengembangan - Luar Negeri',
+            'jumlah_pendidikan_dalam_negeri_f08' => 'Pendidikan dan Ilmu Pengetahuan - Dalam Negeri',
+            'jumlah_pendidikan_luar_negeri_f08' => 'Pendidikan dan Ilmu Pengetahuan - Luar Negeri',
+            'jumlah_foto_video_dalam_negeri_f08' => 'Pengambilan Foto dan Video - Dalam Negeri',
+            'jumlah_foto_video_luar_negeri_f08' => 'Pengambilan Foto dan Video - Luar Negeri',
+            'jumlah_lain_lain_dalam_negeri_f08' => 'Lain-lain - Dalam Negeri',
+            'jumlah_lain_lain_luar_negeri_f08' => 'Lain-lain - Luar Negeri',
+            'struktural_i_a_laki_f01' => 'Struktural I-A Laki-laki', 'struktural_i_a_perempuan_f01' => 'Struktural I-A Perempuan',
+            'struktural_i_b_laki_f01' => 'Struktural I-B Laki-laki', 'struktural_i_b_perempuan_f01' => 'Struktural I-B Perempuan',
+            'struktural_ii_a_laki_f01' => 'Struktural II-A Laki-laki', 'struktural_ii_a_perempuan_f01' => 'Struktural II-A Perempuan',
+            'struktural_ii_b_laki_f01' => 'Struktural II-B Laki-laki', 'struktural_ii_b_perempuan_f01' => 'Struktural II-B Perempuan',
+            'struktural_iii_a_laki_f01' => 'Struktural III-A Laki-laki', 'struktural_iii_a_perempuan_f01' => 'Struktural III-A Perempuan',
+            'struktural_iii_b_laki_f01' => 'Struktural III-B Laki-laki', 'struktural_iii_b_perempuan_f01' => 'Struktural III-B Perempuan',
+            'struktural_iv_a_laki_f01' => 'Struktural IV-A Laki-laki', 'struktural_iv_a_perempuan_f01' => 'Struktural IV-A Perempuan',
+            'struktural_iv_b_laki_f01' => 'Struktural IV-B Laki-laki', 'struktural_iv_b_perempuan_f01' => 'Struktural IV-B Perempuan',
+            'fungsional_khusus_laki_f01' => 'Fungsional Khusus Laki-laki', 'fungsional_khusus_perempuan_f01' => 'Fungsional Khusus Perempuan',
+            'calon_fungsional_khusus_laki_f01' => 'Calon Fungsional Khusus Laki-laki', 'calon_fungsional_khusus_perempuan_f01' => 'Calon Fungsional Khusus Perempuan',
+            'fungsional_umum_laki_f01' => 'Fungsional Umum Laki-laki', 'fungsional_umum_perempuan_f01' => 'Fungsional Umum Perempuan',
             'kawasan_nama' => 'Kawasan Konservasi', 'kawasan_nama_rpjp' => 'Kawasan Konservasi',
             'kawasan_nama_monitoring' => 'Kawasan Konservasi', 'kawasan_nama_evaluasi' => 'Kawasan Konservasi',
             'kawasan_nama_ekosistem' => 'Kawasan Konservasi', 'kawasan_nama_zonasi' => 'Kawasan Konservasi',
@@ -558,6 +844,16 @@ class KonservasiController extends Controller
             'shapefile_d10' => 'Shapefile Area D.10', 'dokumen_sk_d11' => 'Dokumen SK D.11',
             'shapefile_d11' => 'Shapefile Area D.11', 'dokumen_perizinan_d14' => 'Dokumen Perizinan D.14',
             'shapefile_d14' => 'Shapefile Area D.14',
+            'tahun_f07' => 'Tahun', 'periode_semester_f07' => 'Periode Semester',
+            'satuan_kerja_f07' => 'Eselon II / UPT', 'perjanjian_baru_f07' => 'Perjanjian Kerja Sama Baru',
+            'jenis_dokumen_f07' => 'Jenis Dokumen Kerja Sama', 'nama_mitra_f07' => 'Nama Mitra Kerja Sama',
+            'tipe_mitra_f07' => 'Tipe Mitra', 'status_kerja_sama_f07' => 'Status Kerja Sama',
+            'nomor_perjanjian_f07' => 'Nomor Perjanjian', 'tanggal_mulai_f07' => 'Tanggal Mulai',
+            'tanggal_berakhir_f07' => 'Tanggal Berakhir', 'judul_kerja_sama_f07' => 'Judul Kerja Sama',
+            'ruang_lingkup_f07' => 'Ruang Lingkup', 'dukungan_klhk_f07' => 'Dukungan Kinerja KLHK (referensi)',
+            'catatan_dukungan_f07' => 'Catatan Dukungan Kinerja (teks bebas)', 'luas_area_f07' => 'Luas Area',
+            'nilai_komitmen_f07' => 'Nilai Komitmen Pendanaan', 'dokumen_kerja_sama_f07' => 'Dokumen Kerja Sama (pdf)',
+            'provinsi_f07' => 'Provinsi', 'lokasi_detail_f07' => 'Lokasi Detail', 'shapefile_f07' => 'Unggah Point/Polygon Area (shapefile)',
             'satuan_kerja_c01' => 'Satuan Kerja', 'temuan_perjumpaan_spesies_c01' => 'Temuan Perjumpaan Spesies',
             'tahun_c01' => 'Tahun', 'bulan_c01' => 'Periode Bulan',
             'tahun_c02' => 'Tahun', 'satuan_kerja_c02' => 'Satuan Kerja', 'ada_data_lembaga_c02' => 'Ada Data Lembaga Konservasi',
@@ -711,6 +1007,67 @@ class KonservasiController extends Controller
         ]);
 
         $subBidang = SubBidang::findOrFail($request->sub_bidang_id);
+        if ($subBidang->kode_sub === 'F.01') {
+            $jabatanF01 = collect($this->fieldsBySubBidang()['F.01'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f01', 'satuan_kerja_f01', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f01' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f01' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jabatanF01, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.02') {
+            $jumlahPendidikanF02 = collect($this->fieldsBySubBidang()['F.02'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f02', 'satuan_kerja_f02', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f02' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f02' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jumlahPendidikanF02, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.03') {
+            $jumlahGolonganF03 = collect($this->fieldsBySubBidang()['F.03'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f03', 'satuan_kerja_f03', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f03' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f03' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jumlahGolonganF03, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.04') {
+            $request->validate([
+                'tahun_f04' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f04' => 'required|in:Balai KSDA Sulawesi Tengah',
+                'jenis_jabatan_fungsional_f04' => 'required|in:' . implode(',', $this->jenisJabatanFungsionalF04()),
+                'laki_f04' => 'required|integer|min:0',
+                'perempuan_f04' => 'required|integer|min:0',
+            ]);
+        }
+        if ($subBidang->kode_sub === 'F.05') {
+            $jumlahPendidikanF05 = collect($this->fieldsBySubBidang()['F.05'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f05', 'satuan_kerja_f05', 'jenis_jabatan_fungsional_f05', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f05' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f05' => 'required|in:Balai KSDA Sulawesi Tengah',
+                'jenis_jabatan_fungsional_f05' => 'required|in:' . implode(',', $this->jenisJabatanFungsionalF04()),
+            ], array_fill_keys($jumlahPendidikanF05, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.06') {
+            $jumlahPendidikanF06 = collect($this->fieldsBySubBidang()['F.06'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f06', 'satuan_kerja_f06', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f06' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f06' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jumlahPendidikanF06, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.07') {
+            $this->validateF07($request);
+        }
+        if ($subBidang->kode_sub === 'F.08') {
+            $this->validateF08($request);
+        }
         $uploadFields = $this->uploadFieldsForSubBidang($subBidang->kode_sub);
         $request->validate($this->uploadValidationRules($uploadFields), $this->uploadValidationMessages());
         $yearFields = [
@@ -722,6 +1079,14 @@ class KonservasiController extends Controller
             'A.06' => 'tahun_zonasi',
             'B.01' => 'tahun_b01',
             'B.02' => 'tahun_b02',
+            'F.01' => 'tahun_f01',
+            'F.02' => 'tahun_f02',
+            'F.03' => 'tahun_f03',
+            'F.04' => 'tahun_f04',
+            'F.05' => 'tahun_f05',
+            'F.06' => 'tahun_f06',
+            'F.07' => 'tahun_f07',
+            'F.08' => 'tahun_f08',
             'C.01' => 'tahun_c01',
             'C.02' => 'tahun_c02',
             'C.03' => 'tahun_c03',
@@ -750,6 +1115,46 @@ class KonservasiController extends Controller
             'B.02' => $request->filled('jumlah_laki_b02') || $request->filled('jumlah_perempuan_b02')
                 ? (int) $request->input('jumlah_laki_b02', 0) + (int) $request->input('jumlah_perempuan_b02', 0)
                 : null,
+            'F.01' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $this->fieldsBySubBidang()['F.01'],
+                    fn ($field) => str_ends_with($field, '_laki_f01') || str_ends_with($field, '_perempuan_f01')
+                )
+            )),
+            'F.02' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $this->fieldsBySubBidang()['F.02'],
+                    fn ($field) => str_ends_with($field, '_laki_f02') || str_ends_with($field, '_perempuan_f02')
+                )
+            )),
+            'F.03' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $this->fieldsBySubBidang()['F.03'],
+                    fn ($field) => str_ends_with($field, '_laki_f03') || str_ends_with($field, '_perempuan_f03')
+                )
+            )),
+            'F.04' => (int) $request->input('laki_f04', 0) + (int) $request->input('perempuan_f04', 0),
+            'F.05' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $this->fieldsBySubBidang()['F.05'],
+                    fn ($field) => str_ends_with($field, '_laki_f05') || str_ends_with($field, '_perempuan_f05')
+                )
+            )),
+            'F.06' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $this->fieldsBySubBidang()['F.06'],
+                    fn ($field) => str_ends_with($field, '_laki_f06') || str_ends_with($field, '_perempuan_f06')
+                )
+            )),
+            'F.08' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter($this->fieldsBySubBidang()['F.08'], fn ($field) => str_starts_with($field, 'jumlah_'))
+            )),
             'C.03' => $request->input('ada_data_koleksi_c03') === 'ya'
                 ? (int) $request->input('jantan_c03', 0) + (int) $request->input('betina_c03', 0) + (int) $request->input('belum_diketahui_c03', 0)
                 : null,
@@ -785,7 +1190,9 @@ class KonservasiController extends Controller
             $activeFields[] = 'keterangan';
         }
         foreach ($request->only($activeFields) as $field => $value) {
-            if (!is_scalar($value) || $value === '') {
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+            } elseif (!is_scalar($value) || $value === '') {
                 continue;
             }
 
@@ -825,6 +1232,7 @@ class KonservasiController extends Controller
                 ?? $request->input('bulan_c12')
                 ?? $request->input('bulan_c11')
                 ?? $request->input('bulan_c01')
+                ?? $request->input('periode_bulan_f08')
                 ?? $request->bulan,
             'latitude'      => $latitude,
             'longitude'     => $longitude,
@@ -1051,10 +1459,15 @@ class KonservasiController extends Controller
                 'label' => $this->formFieldLabel($field),
             ], $fields);
         }
+        $jenisJabatanFungsionalF04 = $this->jenisJabatanFungsionalF04();
+        $provinsiF07 = $this->provinsiF07();
+        $tipeMitraF07 = $this->tipeMitraF07();
+        $indikatorKlhkF07 = $this->indikatorKlhkF07();
 
         return view('konservasi.edit', compact(
             'item', 'bidangs', 'subBidangs', 'currentBidangId', 'currentKode',
-            'detailValues', 'editFieldsBySubBidang'
+            'detailValues', 'editFieldsBySubBidang', 'jenisJabatanFungsionalF04',
+            'provinsiF07', 'tipeMitraF07', 'indikatorKlhkF07'
         ));
     }
 
@@ -1072,6 +1485,12 @@ class KonservasiController extends Controller
             'tahun_zonasi'  => 'nullable|numeric',
             'tahun_b01'     => 'nullable|numeric',
             'tahun_b02'     => 'nullable|numeric',
+            'tahun_f02'     => 'nullable|numeric',
+            'tahun_f03'     => 'nullable|numeric',
+            'tahun_f04'     => 'nullable|numeric',
+            'tahun_f05'     => 'nullable|numeric',
+            'tahun_f06'     => 'nullable|numeric',
+            'tahun_f07'     => 'nullable|numeric',
             'ada_akses_b02' => 'nullable|in:ya,tidak',
             'jenis_pengelolaan_b02' => 'required_if:ada_akses_b02,ya|nullable|in:akses_tradisional,kemitraan_konservasi',
             'jenis_akses_b02' => 'required_if:ada_akses_b02,ya|nullable|string|max:255',
@@ -1104,6 +1523,68 @@ class KonservasiController extends Controller
             return back()->withErrors(['sub_bidang_id' => 'Sub-bidang tidak sesuai dengan bidang yang dipilih.'])->withInput();
         }
 
+        if ($subBidang->kode_sub === 'F.01') {
+            $jabatanF01 = collect($this->fieldsBySubBidang()['F.01'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f01', 'satuan_kerja_f01', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f01' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f01' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jabatanF01, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.02') {
+            $jumlahPendidikanF02 = collect($this->fieldsBySubBidang()['F.02'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f02', 'satuan_kerja_f02', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f02' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f02' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jumlahPendidikanF02, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.03') {
+            $jumlahGolonganF03 = collect($this->fieldsBySubBidang()['F.03'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f03', 'satuan_kerja_f03', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f03' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f03' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jumlahGolonganF03, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.04') {
+            $request->validate([
+                'tahun_f04' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f04' => 'required|in:Balai KSDA Sulawesi Tengah',
+                'jenis_jabatan_fungsional_f04' => 'required|in:' . implode(',', $this->jenisJabatanFungsionalF04()),
+                'laki_f04' => 'required|integer|min:0',
+                'perempuan_f04' => 'required|integer|min:0',
+            ]);
+        }
+        if ($subBidang->kode_sub === 'F.05') {
+            $jumlahPendidikanF05 = collect($this->fieldsBySubBidang()['F.05'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f05', 'satuan_kerja_f05', 'jenis_jabatan_fungsional_f05', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f05' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f05' => 'required|in:Balai KSDA Sulawesi Tengah',
+                'jenis_jabatan_fungsional_f05' => 'required|in:' . implode(',', $this->jenisJabatanFungsionalF04()),
+            ], array_fill_keys($jumlahPendidikanF05, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.06') {
+            $jumlahPendidikanF06 = collect($this->fieldsBySubBidang()['F.06'])
+                ->reject(fn ($field) => in_array($field, ['tahun_f06', 'satuan_kerja_f06', 'keterangan'], true))
+                ->all();
+            $request->validate(array_merge([
+                'tahun_f06' => 'required|integer|min:1945|max:2100',
+                'satuan_kerja_f06' => 'required|in:Balai KSDA Sulawesi Tengah',
+            ], array_fill_keys($jumlahPendidikanF06, 'required|integer|min:0')));
+        }
+        if ($subBidang->kode_sub === 'F.07') {
+            $this->validateF07($request);
+        }
+        if ($subBidang->kode_sub === 'F.08') {
+            $this->validateF08($request);
+        }
+
         $uploadFields = $this->uploadFieldsForSubBidang($subBidang->kode_sub);
         $request->validate($this->uploadValidationRules($uploadFields), $this->uploadValidationMessages());
 
@@ -1116,11 +1597,23 @@ class KonservasiController extends Controller
         $details = [];
 
         foreach ($request->only(array_merge($fields, ['keterangan'])) as $field => $value) {
-            if (!is_scalar($value) || $value === '') {
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+            } elseif (!is_scalar($value) || $value === '') {
                 continue;
             }
 
             $details[] = $this->formFieldLabel($field) . ': ' . ($value === 'on' ? 'Ya' : $value);
+        }
+
+        if ($subBidang->kode_sub === 'F.07' && $request->input('perjanjian_baru_f07') !== 'ya') {
+            $fieldsToClear = array_diff($fields, [
+                'tahun_f07', 'periode_semester_f07', 'satuan_kerja_f07',
+                'perjanjian_baru_f07', 'keterangan',
+            ]);
+            foreach ($fieldsToClear as $field) {
+                unset($detailValues[$field]);
+            }
         }
 
         if (!$request->exists('keterangan') && filled($detailValues['keterangan'] ?? null)) {
@@ -1128,6 +1621,10 @@ class KonservasiController extends Controller
         }
 
         foreach ($uploadFields as $field => $configuration) {
+            if ($subBidang->kode_sub === 'F.07' && $request->input('perjanjian_baru_f07') !== 'ya') {
+                continue;
+            }
+
             if ($request->hasFile($field)) {
                 $files = $request->file($field);
                 $files = is_array($files) ? $files : [$files];
@@ -1148,7 +1645,8 @@ class KonservasiController extends Controller
         $yearFields = [
             'A.01' => 'tahun', 'A.02' => 'tahun_rpjp', 'A.03' => 'tahun_monitoring',
             'A.04' => 'tahun_evaluasi', 'A.05' => 'tahun_ekosistem', 'A.06' => 'tahun_zonasi',
-            'B.01' => 'tahun_b01', 'B.02' => 'tahun_b02',
+            'B.01' => 'tahun_b01', 'B.02' => 'tahun_b02', 'F.01' => 'tahun_f01', 'F.02' => 'tahun_f02', 'F.03' => 'tahun_f03', 'F.04' => 'tahun_f04', 'F.05' => 'tahun_f05', 'F.06' => 'tahun_f06', 'F.07' => 'tahun_f07',
+            'F.08' => 'tahun_f08',
         ];
         $yearField = $yearFields[$subBidang->kode_sub] ?? null;
         $year = $yearField && $request->filled($yearField)
@@ -1164,13 +1662,55 @@ class KonservasiController extends Controller
             'B.02' => $request->filled('jumlah_laki_b02') || $request->filled('jumlah_perempuan_b02')
                 ? (int) $request->input('jumlah_laki_b02', 0) + (int) $request->input('jumlah_perempuan_b02', 0)
                 : null,
+            'F.01' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $fieldsBySubBidang['F.01'],
+                    fn ($field) => str_ends_with($field, '_laki_f01') || str_ends_with($field, '_perempuan_f01')
+                )
+            )),
+            'F.02' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $fieldsBySubBidang['F.02'],
+                    fn ($field) => str_ends_with($field, '_laki_f02') || str_ends_with($field, '_perempuan_f02')
+                )
+            )),
+            'F.03' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $fieldsBySubBidang['F.03'],
+                    fn ($field) => str_ends_with($field, '_laki_f03') || str_ends_with($field, '_perempuan_f03')
+                )
+            )),
+            'F.04' => (int) $request->input('laki_f04', 0) + (int) $request->input('perempuan_f04', 0),
+            'F.05' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $fieldsBySubBidang['F.05'],
+                    fn ($field) => str_ends_with($field, '_laki_f05') || str_ends_with($field, '_perempuan_f05')
+                )
+            )),
+            'F.06' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter(
+                    $fieldsBySubBidang['F.06'],
+                    fn ($field) => str_ends_with($field, '_laki_f06') || str_ends_with($field, '_perempuan_f06')
+                )
+            )),
+            'F.08' => array_sum(array_map(
+                fn ($field) => (int) $request->input($field, 0),
+                array_filter($fieldsBySubBidang['F.08'], fn ($field) => str_starts_with($field, 'jumlah_'))
+            )),
             default => $request->input('jumlah'),
         };
 
         $item->update([
             'sub_bidang_id' => $subBidang->id,
             'tahun'         => $year,
-            'bulan'         => $request->input('bulan', $item->bulan),
+            'bulan'         => $subBidang->kode_sub === 'F.08'
+                ? $request->input('periode_bulan_f08', $item->bulan)
+                : $request->input('bulan', $item->bulan),
             'latitude'      => $request->input('latitude', $item->latitude),
             'longitude'     => $request->input('longitude', $item->longitude),
             'jumlah'        => $jumlah,
