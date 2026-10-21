@@ -198,6 +198,137 @@ class KonservasiStoreTest extends TestCase
             ->assertSee('Pemungutan HHBK: Rotan');
     }
 
+    public function test_jasa_lingkungan_fields_are_saved_and_rendered_as_matching_columns(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Pemanfaatan Jasa Lingkungan']);
+        $pengunjung = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'D.01',
+            'nama_sub_bidang' => 'Pengunjung Kawasan Konservasi',
+        ]);
+        $dampakWisata = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'D.08',
+            'nama_sub_bidang' => 'Dampak Aktivitas Wisata Alam',
+        ]);
+        $arealAir = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'D.10',
+            'nama_sub_bidang' => 'Areal Pemanfaatan Air dan Energi Air',
+        ]);
+
+        $this->actingAs($user)->post(route('konservasi.store'), [
+            'sub_bidang_id' => $pengunjung->id,
+            'tahun' => '2025',
+            'bulan_d01' => '4',
+            'kawasan_nama_d01' => 'TWA Wera',
+            'penelitian_dalam_negeri' => '12',
+            'wisata_alam_luar_negeri' => '3',
+        ])->assertRedirect(route('konservasi.index'));
+
+        $pengunjungRecord = DataKonservasi::where('sub_bidang_id', $pengunjung->id)->firstOrFail();
+        $this->assertSame(2025, $pengunjungRecord->tahun);
+        $this->assertStringContainsString('Kawasan Konservasi: TWA Wera', $pengunjungRecord->keterangan);
+        $this->assertStringContainsString('Penelitian dan Pengembangan - Dalam Negeri: 12', $pengunjungRecord->keterangan);
+
+        $this->get(route('konservasi.index', [
+            'bidang' => 'pemanfaatan_jasling',
+            'sub_bidang' => 'D.01',
+        ]))
+            ->assertOk()
+            ->assertSeeInOrder(['No', 'Tahun', 'Kawasan Konservasi', 'Periode Bulan'])
+            ->assertSee('Penelitian dan Pengembangan - Dalam Negeri')
+            ->assertSee('Wisata Alam - Luar Negeri')
+            ->assertSee('TWA Wera');
+
+        $this->post(route('konservasi.store'), [
+            'sub_bidang_id' => $dampakWisata->id,
+            'tahun_d08' => '2024',
+            'periode_bulan_d08' => 'Januari',
+            'kawasan_nama_d08' => 'SM Bakiriang',
+            'data_tersedia_d08' => 'ya',
+            'odtwa_d08' => 'ODTWA 1',
+            'dipa_d08' => '2500000',
+            'jumlah_pelaku_pemandu_d08' => '4',
+            'omset_pemandu_d08' => '900000',
+            'nilai_ekonomi_terdampak_d08' => '3000000',
+        ])->assertRedirect(route('konservasi.index'));
+
+        $dampakRecord = DataKonservasi::where('sub_bidang_id', $dampakWisata->id)->firstOrFail();
+        $this->assertSame(2024, $dampakRecord->tahun);
+        $this->assertSame('Januari', $dampakRecord->bulan);
+        $this->assertStringContainsString('Jumlah Pelaku Usaha - Pemandu Wisata: 4', $dampakRecord->keterangan);
+        $this->assertStringContainsString('Perkiraan Omset - Pemandu Wisata: 900000', $dampakRecord->keterangan);
+
+        $this->get(route('konservasi.index', [
+            'bidang' => 'pemanfaatan_jasling',
+            'sub_bidang' => 'D.08',
+        ]))
+            ->assertOk()
+            ->assertSee('Perkiraan Omset - Pemandu Wisata')
+            ->assertSee('SM Bakiriang');
+
+        $this->post(route('konservasi.store'), [
+            'sub_bidang_id' => $arealAir->id,
+            'tahun_d_10' => '2023',
+            'kawasan_nama_d_10' => 'CA Gunung Dako',
+            'data_tersedia_d_10' => 'ya',
+            'zonasi_blok_d10' => 'Zona Pemanfaatan',
+            'bidang_seksi_pengelolaan_wilayah_d10' => 'Seksi Pengelolaan Wilayah I',
+        ])->assertRedirect(route('konservasi.index'));
+
+        $arealAirRecord = DataKonservasi::where('sub_bidang_id', $arealAir->id)->firstOrFail();
+        $this->assertSame(2023, $arealAirRecord->tahun);
+        $this->assertStringContainsString('Zona/Blok: Zona Pemanfaatan', $arealAirRecord->keterangan);
+
+        $this->get(route('konservasi.index', [
+            'bidang' => 'pemanfaatan_jasling',
+            'sub_bidang' => 'D.10',
+        ]))
+            ->assertOk()
+            ->assertSee('Data Tersedia')
+            ->assertSee('Zona/Blok')
+            ->assertSee('CA Gunung Dako');
+    }
+
+    public function test_species_and_genetics_table_uses_the_conservation_table_layout(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $bidang = Bidang::create(['nama_bidang' => 'Konservasi Spesies dan Genetik']);
+        $subBidang = SubBidang::create([
+            'bidang_id' => $bidang->id,
+            'kode_sub' => 'C.01',
+            'nama_sub_bidang' => 'Perjumpaan Spesies di dalam dan luar Kawasan Konservasi',
+        ]);
+
+        $this->actingAs($user)->post(route('konservasi.store'), [
+            'sub_bidang_id' => $subBidang->id,
+            'satuan_kerja_c01' => 'Balai KSDA Sulawesi Tengah',
+            'temuan_perjumpaan_spesies_c01' => 'Di dalam kawasan konservasi',
+            'tahun_c01' => '2026',
+            'bulan_c01' => '8',
+            'spesies_c01' => 'Anoa',
+            'jumlah_individu_c01' => '2',
+        ])->assertRedirect(route('konservasi.index'));
+
+        $record = DataKonservasi::where('sub_bidang_id', $subBidang->id)->firstOrFail();
+        $this->assertSame(2026, $record->tahun);
+        $this->assertSame(8, $record->bulan);
+        $this->assertStringContainsString('Spesies: Anoa', $record->keterangan);
+
+        $this->actingAs($user)
+            ->get(route('konservasi.index', [
+                'bidang' => 'konservasi_spesies',
+                'sub_bidang' => 'C.01',
+            ]))
+            ->assertOk()
+            ->assertSeeInOrder(['No', 'Tahun', 'Satuan Kerja', 'Periode Bulan', 'Temuan Perjumpaan Spesies', 'Spesies'])
+            ->assertSee('Balai KSDA Sulawesi Tengah')
+            ->assertSee('Anoa')
+            ->assertSee('2026');
+    }
+
     public function test_f01_counts_are_required_saved_and_editable(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);
@@ -1176,18 +1307,32 @@ class KonservasiStoreTest extends TestCase
 
         $this->actingAs($user)->post(route('konservasi.store'), [
             'sub_bidang_id' => $subBidang->id,
-            'tahun' => '2026',
+            'tahun_d09' => '2026',
+            'kawasan_nama_d09' => 'TWA Wera',
             'latitude_air_d09' => '-0.897123',
             'longitude_air_d09' => '119.87123',
         ])->assertRedirect(route('konservasi.index'));
 
         $record = DataKonservasi::firstOrFail();
+        $this->assertSame(2026, $record->tahun);
         $this->assertSame('-0.897123', $record->latitude);
         $this->assertSame('119.87123', $record->longitude);
 
         $this->actingAs($user)
             ->get(route('konservasi.peta'))
             ->assertOk()
+            ->assertSee('-0.897123')
+            ->assertSee('119.87123');
+
+        $this->actingAs($user)
+            ->get(route('konservasi.index', [
+                'bidang' => 'pemanfaatan_jasling',
+                'sub_bidang' => 'D.09',
+            ]))
+            ->assertOk()
+            ->assertSee('Latitude')
+            ->assertSee('Longitude')
+            ->assertSee('TWA Wera')
             ->assertSee('-0.897123')
             ->assertSee('119.87123');
     }

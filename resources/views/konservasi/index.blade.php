@@ -905,7 +905,15 @@
                 @else
                 @if($selectedSub)
                     @php
-                        $detailColumnLabels = [];
+                        $detailColumnLabels = $detailColumnLabels ?? [];
+                        $isPjlTable = $selectedBidang === 'pemanfaatan_jasling';
+                        $isSpeciesTable = $selectedBidang === 'konservasi_spesies';
+                        $speciesPeriodLabel = match ($selectedSub) {
+                            'C.01', 'C.11', 'C.12', 'C.14', 'C.15', 'C.16', 'C.17' => 'Periode Bulan',
+                            'C.03' => 'Periode Semester',
+                            'C.08', 'C.09', 'C.10' => 'Periode Triwulan',
+                            default => null,
+                        };
                         $detailRowsById = [];
                         $uploadFolders = ['dokumen_sk/', 'shapefiles/', 'dokumen_rpjp/', 'dokumen_batb/', 'dokumen_evaluasi/', 'dokumen_zonasi/', 'dokumen_desain_tapak/', 'dokumen_perizinan/', 'foto_odtwa/', 'foto_sarana_prasarana/'];
 
@@ -924,17 +932,38 @@
                             }
                             $detailRowsById[$rowItem->id] = $rowDetails;
                         }
+
+                        if ($isPjlTable || $isSpeciesTable) {
+                            unset($detailColumnLabels['Tahun']);
+                        }
+                        if ($isPjlTable) {
+                            unset($detailColumnLabels['Kawasan Konservasi']);
+                        }
+                        if ($isSpeciesTable) {
+                            unset($detailColumnLabels['Satuan Kerja'], $detailColumnLabels[$speciesPeriodLabel ?? '']);
+                        }
                     @endphp
 
                     <div class="overflow-x-auto">
-                        <table class="min-w-full w-max text-left border-collapse">
+                        <table class="min-w-max w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                                    <th class="py-4 px-5">No</th>
+                                <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                                    <th class="min-w-16 border-b border-slate-200 px-4 py-3">No</th>
+                                    @if($isPjlTable || $isSpeciesTable)
+                                        <th class="min-w-24 border-b border-slate-200 px-4 py-3">Tahun</th>
+                                        @if($isPjlTable)
+                                            <th class="min-w-56 border-b border-slate-200 px-4 py-3">Kawasan Konservasi</th>
+                                        @else
+                                            <th class="min-w-56 border-b border-slate-200 px-4 py-3">Satuan Kerja</th>
+                                            @if($speciesPeriodLabel)
+                                                <th class="min-w-36 border-b border-slate-200 px-4 py-3">{{ $speciesPeriodLabel }}</th>
+                                            @endif
+                                        @endif
+                                    @endif
                                     @foreach ($detailColumnLabels as $detailColumnLabel)
-                                        <th class="min-w-36 max-w-64 px-4 py-4">{{ $detailColumnLabel }}</th>
+                                        <th class="min-w-40 max-w-64 whitespace-normal border-b border-slate-200 px-4 py-3">{{ $detailColumnLabel }}</th>
                                     @endforeach
-                                    <th class="py-4 px-5 text-center">Aksi</th>
+                                    <th class="min-w-32 border-b border-slate-200 px-4 py-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-xs font-medium text-slate-700">
@@ -943,7 +972,18 @@
                                         $rowDetails = $detailRowsById[$item->id] ?? [];
                                     @endphp
                                     <tr class="align-top hover:bg-slate-50/80 transition-colors">
-                                        <td class="px-5 py-4 font-bold text-slate-400">{{ method_exists($data, 'firstItem') ? $data->firstItem() + $index : $index + 1 }}</td>
+                                        <td class="px-4 py-4 font-bold text-slate-400">{{ method_exists($data, 'firstItem') ? $data->firstItem() + $index : $index + 1 }}</td>
+                                        @if($isPjlTable || $isSpeciesTable)
+                                            <td class="whitespace-nowrap px-4 py-4">{{ $item->tahun ?? '-' }}</td>
+                                            @if($isPjlTable)
+                                                <td class="min-w-56 whitespace-normal break-words px-4 py-4">{{ $rowDetails['Kawasan Konservasi'] ?? '-' }}</td>
+                                            @else
+                                                <td class="min-w-56 whitespace-normal break-words px-4 py-4">{{ $rowDetails['Satuan Kerja'] ?? '-' }}</td>
+                                                @if($speciesPeriodLabel)
+                                                    <td class="whitespace-nowrap px-4 py-4">{{ $rowDetails[$speciesPeriodLabel] ?? '-' }}</td>
+                                                @endif
+                                            @endif
+                                        @endif
                                         @foreach ($detailColumnLabels as $detailColumnLabel)
                                             @php
                                                 $detailValue = $rowDetails[$detailColumnLabel] ?? null;
@@ -963,7 +1003,7 @@
                                                     }
                                                 }
                                             @endphp
-                                            <td class="max-w-64 whitespace-normal break-words px-4 py-4">
+                                            <td class="max-w-64 whitespace-normal break-words border-b border-slate-100 px-4 py-4">
                                                 @if ($isStoredUpload)
                                                     <div class="flex flex-wrap gap-x-2 gap-y-1">
                                                         @foreach ($uploadPaths as $uploadPath)
@@ -1000,7 +1040,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="{{ count($detailColumnLabels) + 2 }}" class="px-5 py-12 text-center">
+                                        <td colspan="{{ count($detailColumnLabels) + ($isPjlTable ? 4 : ($isSpeciesTable ? ($speciesPeriodLabel ? 5 : 4) : 2)) }}" class="px-5 py-12 text-center">
                                             <div class="mx-auto max-w-xs space-y-2">
                                                 <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-lg text-slate-400"><i class="fa-solid fa-folder-open"></i></div>
                                                 <p class="text-xs font-bold text-slate-600">Data Tidak Ditemukan</p>

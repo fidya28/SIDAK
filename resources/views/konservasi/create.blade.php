@@ -1645,7 +1645,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Periode Bulan: <span class="text-rose-500">*</span></label>
-                            <select name="bulan" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none" required>
+                            <select name="bulan_d01" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none" required>
                                 <option value="">Pilih periode</option>
                                 @for ($month = 1; $month <= 12; $month++)
                                     <option value="{{ $month }}">{{ DateTime::createFromFormat('!m', $month)->format('F') }}</option>
@@ -1706,7 +1706,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Periode Bulan: <span class="text-rose-500">*</span></label>
-                            <select name="bulan" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none" required>
+                            <select name="bulan_d02" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-forest-600 focus:bg-white focus:outline-none" required>
                                 <option value="">Pilih periode</option>
                                 @for ($month = 1; $month <= 12; $month++)
                                     <option value="{{ $month }}">{{ DateTime::createFromFormat('!m', $month)->format('F') }}</option>

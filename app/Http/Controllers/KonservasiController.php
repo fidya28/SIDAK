@@ -211,9 +211,20 @@ class KonservasiController extends Controller
         $data = !$canShowResults
             ? collect()
             : ($request->boolean('export_all') ? $query->get() : $query->paginate(10)->withQueryString());
+
+        $detailColumnLabels = [];
+        if (
+            ($selectedBidang === 'pemanfaatan_jasling' && preg_match('/^D\.\d{2}$/', (string) $selectedSub))
+            || ($selectedBidang === 'konservasi_spesies' && preg_match('/^C\.\d{2}$/', (string) $selectedSub))
+        ) {
+            foreach ($this->fieldsBySubBidang()[$selectedSub] ?? [] as $field) {
+                $label = $this->formFieldLabel($field);
+                $detailColumnLabels[$label] = $label;
+            }
+        }
         
         // 4. Return view dengan menyertakan data pendukung
-        return view('konservasi.index', compact('data', 'masterBidang', 'selectedBidang', 'selectedSub'));
+        return view('konservasi.index', compact('data', 'masterBidang', 'selectedBidang', 'selectedSub', 'detailColumnLabels'));
     }
 
     // Fitur Unduh PDF
@@ -396,6 +407,40 @@ class KonservasiController extends Controller
 
     private function fieldsBySubBidang(): array
     {
+        $d01Fields = ['tahun', 'bulan_d01', 'kawasan_nama_d01'];
+        foreach (['penelitian', 'pendidikan', 'foto_video', 'wisata_alam', 'lain_lain'] as $category) {
+            foreach (['dalam_negeri', 'luar_negeri'] as $region) {
+                $d01Fields[] = $category . '_' . $region;
+            }
+        }
+
+        $d02Items = [
+            'dalam_negeri_hari_kerja', 'luar_negeri_hari_kerja', 'pelajar_hari_kerja',
+            'dalam_negeri_hari_libur', 'pelajar_hari_libur', 'roda_2', 'roda_4', 'roda_6',
+            'sepeda', 'kuda', 'kapal_40_100', 'kapal_101_500', 'kapal_diatas_500',
+            'kapal_pesiar', 'transportasi_khusus', 'berkemah', 'mendaki', 'gua',
+            'memancing', 'menyelam', 'arung_jeram', 'paralayang', 'balon_udara',
+        ];
+        $d02Fields = ['tahun', 'bulan_d02', 'kawasan_nama_d02'];
+        foreach ($d02Items as $activity) {
+            $d02Fields[] = 'd02_' . $activity . '_pnbp';
+            $d02Fields[] = 'd02_' . $activity . '_jumlah';
+        }
+        foreach (['videografi_komersil', 'fotografi_komersil', 'video_foto_pre_wedding', 'penggunaan_drone', 'penggunaan_fasilitas_wisata', 'denda_pengunjung_kendaraan'] as $activity) {
+            foreach (['dalam_negeri', 'luar_negeri'] as $region) {
+                $d02Fields[] = 'd02_' . $activity . '_' . $region . '_pnbp';
+                $d02Fields[] = 'd02_' . $activity . '_' . $region . '_jumlah';
+                $d02Fields[] = 'd02_' . $activity . '_' . $region . '_keterangan';
+            }
+        }
+
+        $d08Fields = ['tahun_d08', 'periode_bulan_d08', 'kawasan_nama_d08', 'data_tersedia_d08', 'odtwa_d08', 'dipa_d08'];
+        foreach (['pemandu', 'ojek', 'porter', 'makanan_minuman', 'homestay'] as $business) {
+            $d08Fields[] = 'jumlah_pelaku_' . $business . '_d08';
+            $d08Fields[] = 'omset_' . $business . '_d08';
+        }
+        $d08Fields = array_merge($d08Fields, ['nilai_ekonomi_terdampak_d08', 'keterangan_d08']);
+
         return [
             'A.01' => ['tahun', 'kawasan_nama', 'ada_perubahan', 'sk_parsial_nomor', 'sk_parsial_tanggal', 'sk_parsial_luas', 'sk_parsial_file', 'sk_provinsi_tersedia', 'sk_provinsi_nomor', 'sk_provinsi_tanggal', 'sk_provinsi_luas', 'sk_provinsi_file', 'sk_penetapan_tersedia', 'sk_penetapan_nomor', 'sk_penetapan_tanggal', 'sk_penetapan_luas', 'sk_penetapan_file', 'shapefile_zip'],
             'F.01' => [
@@ -476,13 +521,22 @@ class KonservasiController extends Controller
             'A.05' => ['tahun_ekosistem', 'kawasan_nama_ekosistem', 'ketersediaan_ekosistem', 'shapefile_ekosistem_zip'],
             'A.06' => ['tahun_zonasi', 'kawasan_nama_zonasi', 'ketersediaan_zonasi', 'nomor_sk_zonasi', 'tanggal_sk_zonasi', 'file_sk_zonasi', 'shapefile_zonasi_zip'],
             'B.01' => ['tahun_b01', 'periode_semester', 'kawasan_nama_b01', 'ada_kegiatan_b01', 'nama_kelompok', 'jumlah_laki', 'jumlah_perempuan', 'provinsi', 'kabupaten', 'kecamatan', 'desa', 'hhbk_nihil', 'jenis_hhbk', 'pertanian_nihil', 'jenis_pertanian', 'perkebunan_nihil', 'jenis_perkebunan', 'peternakan_nihil', 'jenis_peternakan', 'perikanan_nihil', 'jenis_perikanan', 'wisata_nihil', 'jenis_wisata', 'produk_nihil', 'jenis_produk', 'pembibitan_nihil', 'jenis_pembibitan', 'lainnya_nihil', 'jenis_lainnya', 'jenis_bantuan', 'jumlah_bantuan', 'sumber_dana'],
-            'D.03' => ['dokumen_d03', 'shapefile_d03'],
-            'D.04' => ['foto_odtwa'],
-            'D.06' => ['dokumen_perizinan_pbp_d06', 'shapefile_pbp_d06'],
-            'D.07' => ['foto_sarana_prasarana_d07'],
-            'D.10' => ['shapefile_d10'],
-            'D.11' => ['dokumen_sk_d11', 'shapefile_d11'],
-            'D.14' => ['dokumen_perizinan_d14', 'shapefile_d14'],
+            'D.01' => $d01Fields,
+            'D.02' => $d02Fields,
+            'D.03' => ['tahun', 'kawasan_nama_d03', 'ada_pengesahan_d03', 'zonasi_blok_d03', 'bidang_seksi_d03', 'nomor_dokumen_d03', 'tanggal_pengesahan_d03', 'judul_sk_d03', 'luas_zona_d03', 'dokumen_d03', 'shapefile_d03', 'komentar_d03'],
+            'D.04' => ['tahun_d04', 'kawasan_nama_d04', 'ada_data_odtwa_baru', 'nama_odtwa', 'jenis_odtwa', 'longitude_odtwa', 'latitude_odtwa', 'zona_blok_odtwa', 'daya_dukung_odtwa', 'foto_odtwa', 'keterangan_odtwa'],
+            'D.05' => ['tahun_d05', 'kawasan_nama_d05', 'ada_penerbitan_izin_pbp', 'wilayah_area_kerja_pbp', 'provinsi_pbp', 'jenis_perizinan_pbp', 'pemegang_izin_berusaha_pbp', 'nib_pbp', 'nomor_sertifikat_standar_pbp', 'zona_blok_pbp', 'jumlah_tenaga_kerja_pbp', 'perkiraan_omset_per_tahun_pbp', 'keterangan_pbp'],
+            'D.06' => ['tahun_d06', 'kawasan_nama_d06', 'ada_penerbitan_izin_pbp_d06', 'nama_ruang_usaha_pbp_d06', 'nama_pemegang_izin_pbp_d06', 'nib_pbp_d06', 'nomor_perizinan_pbp_d06', 'tanggal_perizinan_pbp_d06', 'luas_area_perizinan_pbp_d06', 'zona_blok_pbp_d06', 'provinsi_pbp_d06', 'jumlah_tenaga_kerja_pbp_d06', 'nilai_investasi_pbp_d06', 'dokumen_perizinan_pbp_d06', 'shapefile_pbp_d06', 'keterangan_pbp_d06'],
+            'D.07' => ['tahun_d07', 'kawasan_nama_d07', 'ada_sarana_prasarana_d07', 'nama_sarana_prasarana_d07', 'tahun_pembangunan_d07', 'luas_sarana_prasarana_d07', 'kondisi_sarana_prasarana_d07', 'nilai_investasi_sarana_prasarana_d07', 'sumber_dana_sarana_prasarana_d07', 'longitude_sarana_prasarana_d07', 'latitude_sarana_prasarana_d07', 'zona_blok_sarana_prasarana_d07', 'foto_sarana_prasarana_d07', 'keterangan_sarana_prasarana_d07'],
+            'D.08' => $d08Fields,
+            'D.09' => ['tahun_d09', 'kawasan_nama_d09', 'ada_potensi_air_d09', 'sumber_air_d09', 'jenis_sumber_air_d09', 'debit_air_d09', 'latitude_air_d09', 'longitude_air_d09', 'keterangan_air_d09'],
+            'D.10' => ['tahun_d_10', 'kawasan_nama_d_10', 'data_tersedia_d_10', 'zonasi_blok_d10', 'bidang_seksi_pengelolaan_wilayah_d10', 'jumlah_sumber_air_d10', 'total_debit_air_d10', 'luas_areal_pemanfaatan_d10', 'shapefile_d10', 'keterangan_d10'],
+            'D.11' => ['tahun_d_11', 'kawasan_nama_d_11', 'data_tersedia_d_11', 'sumber_air_d11', 'jenis_perizinan_d11', 'nama_pemegang_izin_d11', 'komersil_d11', 'no_surat_keputusan_d11', 'tanggal_sk_d11', 'luas_areal_d11', 'dokumen_sk_d11', 'kabupaten_d11', 'kecamatan_d11', 'kelurahan_d11', 'jumlah_kk_d11', 'jumlah_tenaga_kerja_d11', 'nilai_investasi_d11', 'shapefile_d11', 'keterangan_d11'],
+            'D.12' => ['tahun_d_12', 'kawasan_nama_d_12', 'data_tersedia_d_12', 'potensi_karbon_per_ha_d12', 'total_stok_karbon_d12', 'nilai_flora_d12', 'nilai_satwa_d12', 'nilai_jasa_air_d12', 'nilai_jasa_wisata_alam_d12', 'nilai_jasa_lingkungan_total_d12', 'nilai_kualitas_karbon_d12', 'nilai_ekosistem_d12', 'keterangan_d12'],
+            'D.13' => ['tahun_d_13', 'kawasan_nama_d_13', 'data_tersedia_d_13', 'nama_manifestasi_d13', 'jenis_manifestasi_d13', 'longitude_manifestasi_d13', 'latitude_manifestasi_d13', 'zona_blok_manifestasi_d13', 'keterangan_d13'],
+            'D.14' => ['tahun_d_14', 'kawasan_nama_d_14', 'data_tersedia_d_14', 'jenis_perizinan_d14', 'nama_pemegang_izin_d14', 'nib_d14', 'nomor_perizinan_d14', 'tanggal_perizinan_d14', 'luas_area_perizinan_d14', 'dokumen_perizinan_d14', 'zona_blok_d14', 'sptn_skw_d14', 'nama_wilayah_kerja_d14', 'status_wilayah_kerja_d14', 'luas_wilayah_kerja_d14', 'kapasitas_terbangkit_d14', 'shapefile_d14', 'keterangan_d14'],
+            'D.15' => ['tahun_d_15', 'kawasan_nama_d_15', 'data_tersedia_d_15', 'jenis_kecelakaan_d15', 'lokasi_kejadian_d15', 'korban_dalam_negeri_d15', 'korban_luar_negeri_d15', 'kategori_ringan_d15', 'kategori_sedang_d15', 'kategori_berat_d15', 'luka_ringan_dalam_negeri_d15', 'luka_ringan_luar_negeri_d15', 'luka_berat_dalam_negeri_d15', 'luka_berat_luar_negeri_d15', 'meninggal_dalam_negeri_d15', 'meninggal_luar_negeri_d15', 'keterangan_d15'],
+            'D.16' => ['tahun_d_16', 'data_tersedia_d_16', 'periode_semester_d16', 'satuan_kerja_d16', 'jenis_publikasi_d16', 'judul_publikasi_d16', 'penyelenggara_kegiatan_d16', 'sumber_pembiayaan_d16', 'keterangan_d16'],
             'B.02' => ['tahun_b02', 'kawasan_nama_b02', 'ada_akses_b02', 'jenis_pengelolaan_b02', 'jenis_akses_b02', 'jenis_dimanfaatkan_b02', 'nama_kelompok_b02', 'masyarakat_hukum_adat_b02', 'jumlah_laki_b02', 'jumlah_perempuan_b02', 'kabupaten_b02', 'kecamatan_b02', 'desa_b02', 'nomor_surat_dirjen_b02', 'nomor_pks_b02', 'tanggal_mulai_ks_b02', 'tanggal_akhir_pks_b02', 'luas_area_b02', 'zona_blok_b02', 'dokumen_kerjasama_b02', 'shapefile_kerjasama_b02'],
             'C.01' => ['satuan_kerja_c01', 'temuan_perjumpaan_spesies_c01', 'tahun_c01', 'bulan_c01', 'spesies_c01', 'spesies_lainnya_c01', 'jumlah_individu_c01', 'tanggal_perjumpaan_c01', 'latitude_c01', 'longitude_c01', 'kategori_perjumpaan_c01', 'keterangan_c01'],
             'C.02' => ['tahun_c02', 'satuan_kerja_c02', 'ada_data_lembaga_c02', 'nama_lembaga_c02', 'bentuk_lembaga_c02', 'latitude_c02', 'longitude_c02', 'alamat_lembaga_c02', 'nomor_dokumen_perizinan_c02', 'luas_areal_c02', 'tanggal_perizinan_c02', 'tanggal_berakhir_izin_c02', 'dokumen_perizinan_c02', 'keterangan_c02'],
@@ -764,6 +818,65 @@ class KonservasiController extends Controller
 
     private function formFieldLabel(string $field): string
     {
+        $d02Activities = [
+            'dalam_negeri_hari_kerja' => 'Dalam Negeri (Hari Kerja)',
+            'luar_negeri_hari_kerja' => 'Luar Negeri (Hari Kerja)',
+            'pelajar_hari_kerja' => 'Pelajar/Mahasiswa (Hari Kerja)',
+            'dalam_negeri_hari_libur' => 'Dalam Negeri (Hari Libur)',
+            'pelajar_hari_libur' => 'Pelajar/Mahasiswa (Hari Libur)',
+            'roda_2' => 'Kendaraan Roda 2', 'roda_4' => 'Kendaraan Roda 4',
+            'roda_6' => 'Kendaraan Roda 6 atau Lebih', 'sepeda' => 'Sepeda',
+            'kuda' => 'Kuda', 'kapal_40_100' => 'Kapal Motor 40 s.d. 100 PK',
+            'kapal_101_500' => 'Kapal Motor 101 s.d. 500 PK',
+            'kapal_diatas_500' => 'Kapal Motor di atas 500 PK',
+            'kapal_pesiar' => 'Kapal Pesiar/Cruiser Ship',
+            'transportasi_khusus' => 'Transportasi Khusus',
+            'berkemah' => 'Berkemah', 'mendaki' => 'Mendaki Gunung',
+            'gua' => 'Penelusuran Gua', 'memancing' => 'Memancing',
+            'menyelam' => 'Menyelam', 'arung_jeram' => 'Arung Jeram',
+            'paralayang' => 'Paralayang', 'balon_udara' => 'Balon Udara',
+            'videografi_komersil' => 'Videografi Komersil',
+            'fotografi_komersil' => 'Fotografi Komersil',
+            'video_foto_pre_wedding' => 'Video dan Foto Pre-wedding',
+            'penggunaan_drone' => 'Penggunaan/Menerbangkan Drone',
+            'penggunaan_fasilitas_wisata' => 'Penggunaan Fasilitas Wisata',
+            'denda_pengunjung_kendaraan' => 'Denda Pengunjung dan Kendaraan Ilegal',
+        ];
+        if (preg_match('/^d02_(.+?)(?:_(dalam_negeri|luar_negeri))?_(pnbp|jumlah|keterangan)$/', $field, $matches)) {
+            $activity = $d02Activities[$matches[1]] ?? ucwords(str_replace('_', ' ', $matches[1]));
+            $region = isset($matches[2]) ? ' (' . ucwords(str_replace('_', ' ', $matches[2])) . ')' : '';
+            $measure = match ($matches[3]) {
+                'pnbp' => 'Jumlah PNBP',
+                'jumlah' => 'Jumlah',
+                default => 'Keterangan',
+            };
+
+            return $activity . $region . ' - ' . $measure;
+        }
+
+        if (preg_match('/^(jumlah_pelaku|omset)_(.+)_d08$/', $field, $matches)) {
+            $business = [
+                'pemandu' => 'Pemandu Wisata', 'ojek' => 'Ojek Wisata',
+                'porter' => 'Porter Wisata', 'makanan_minuman' => 'Penyedia Makanan dan Minuman',
+                'homestay' => 'Homestay',
+            ][$matches[2]] ?? ucwords(str_replace('_', ' ', $matches[2]));
+            $measure = $matches[1] === 'jumlah_pelaku' ? 'Jumlah Pelaku Usaha' : 'Perkiraan Omset';
+
+            return $measure . ' - ' . $business;
+        }
+
+        if (preg_match('/^(kategori|luka_ringan|luka_berat|meninggal)_(ringan|sedang|berat|dalam_negeri|luar_negeri)_d15$/', $field, $matches)) {
+            $group = [
+                'kategori' => 'Kategori Kecelakaan',
+                'luka_ringan' => 'Korban Luka Ringan',
+                'luka_berat' => 'Korban Luka Berat',
+                'meninggal' => 'Korban Meninggal',
+            ][$matches[1]];
+            $value = ucwords(str_replace('_', ' ', $matches[2]));
+
+            return $group . ' - ' . $value;
+        }
+
         $labels = [
             'tahun' => 'Tahun', 'tahun_rpjp' => 'Tahun', 'tahun_monitoring' => 'Tahun',
             'tahun_evaluasi' => 'Tahun', 'tahun_ekosistem' => 'Tahun', 'tahun_zonasi' => 'Tahun', 'tahun_b01' => 'Tahun', 'tahun_b02' => 'Tahun',
@@ -844,6 +957,103 @@ class KonservasiController extends Controller
             'shapefile_d10' => 'Shapefile Area D.10', 'dokumen_sk_d11' => 'Dokumen SK D.11',
             'shapefile_d11' => 'Shapefile Area D.11', 'dokumen_perizinan_d14' => 'Dokumen Perizinan D.14',
             'shapefile_d14' => 'Shapefile Area D.14',
+            'kawasan_nama_d01' => 'Kawasan Konservasi', 'kawasan_nama_d02' => 'Kawasan Konservasi',
+            'kawasan_nama_d03' => 'Kawasan Konservasi', 'kawasan_nama_d04' => 'Kawasan Konservasi',
+            'kawasan_nama_d05' => 'Kawasan Konservasi', 'kawasan_nama_d06' => 'Kawasan Konservasi',
+            'kawasan_nama_d07' => 'Kawasan Konservasi', 'kawasan_nama_d08' => 'Kawasan Konservasi',
+            'kawasan_nama_d09' => 'Kawasan Konservasi', 'kawasan_nama_d_10' => 'Kawasan Konservasi',
+            'kawasan_nama_d_11' => 'Kawasan Konservasi', 'kawasan_nama_d_12' => 'Kawasan Konservasi',
+            'kawasan_nama_d_13' => 'Kawasan Konservasi', 'kawasan_nama_d_14' => 'Kawasan Konservasi',
+            'kawasan_nama_d_15' => 'Kawasan Konservasi',
+            'tahun_d04' => 'Tahun', 'tahun_d05' => 'Tahun', 'tahun_d06' => 'Tahun',
+            'tahun_d07' => 'Tahun', 'tahun_d08' => 'Tahun', 'tahun_d09' => 'Tahun',
+            'tahun_d_10' => 'Tahun', 'tahun_d_11' => 'Tahun', 'tahun_d_12' => 'Tahun',
+            'tahun_d_13' => 'Tahun', 'tahun_d_14' => 'Tahun', 'tahun_d_15' => 'Tahun', 'tahun_d_16' => 'Tahun',
+            'bulan' => 'Periode Bulan', 'bulan_d01' => 'Periode Bulan', 'bulan_d02' => 'Periode Bulan',
+            'periode_bulan_d08' => 'Periode Bulan',
+            'ada_pengesahan_d03' => 'Ada Pengesahan/Perubahan Desain Tapak',
+            'zonasi_blok_d03' => 'Zonasi/Blok', 'bidang_seksi_d03' => 'Bidang/Seksi Pengelolaan Wilayah',
+            'nomor_dokumen_d03' => 'Nomor SK', 'tanggal_pengesahan_d03' => 'Tanggal SK',
+            'judul_sk_d03' => 'Judul SK', 'luas_zona_d03' => 'Luas Zona/Blok Pemanfaatan',
+            'komentar_d03' => 'Keterangan', 'tahun_d04' => 'Tahun',
+            'ada_data_odtwa_baru' => 'Ada Data ODTWA Baru', 'nama_odtwa' => 'Nama ODTWA',
+            'jenis_odtwa' => 'Jenis ODTWA', 'longitude_odtwa' => 'Longitude', 'latitude_odtwa' => 'Latitude',
+            'zona_blok_odtwa' => 'Zona/Blok', 'daya_dukung_odtwa' => 'Daya Dukung ODTWA',
+            'keterangan_odtwa' => 'Keterangan', 'tahun_d05' => 'Tahun',
+            'ada_penerbitan_izin_pbp' => 'Ada Penerbitan Izin PBP',
+            'wilayah_area_kerja_pbp' => 'Wilayah/Area Kerja', 'provinsi_pbp' => 'Provinsi',
+            'jenis_perizinan_pbp' => 'Jenis Perizinan Berusaha',
+            'pemegang_izin_berusaha_pbp' => 'Pemegang Izin Berusaha', 'nib_pbp' => 'Nomor Induk Berusaha (NIB)',
+            'nomor_sertifikat_standar_pbp' => 'Nomor Sertifikat Standar', 'zona_blok_pbp' => 'Zona/Blok',
+            'jumlah_tenaga_kerja_pbp' => 'Jumlah Tenaga Kerja',
+            'perkiraan_omset_per_tahun_pbp' => 'Perkiraan Omset per Tahun', 'keterangan_pbp' => 'Keterangan',
+            'tahun_d06' => 'Tahun', 'ada_penerbitan_izin_pbp_d06' => 'Ada Penerbitan Izin PBP',
+            'nama_ruang_usaha_pbp_d06' => 'Nama Ruang Usaha', 'nama_pemegang_izin_pbp_d06' => 'Nama Pemegang Izin',
+            'nib_pbp_d06' => 'Nomor Induk Berusaha (NIB)', 'nomor_perizinan_pbp_d06' => 'Nomor Perizinan',
+            'tanggal_perizinan_pbp_d06' => 'Tanggal Perizinan', 'luas_area_perizinan_pbp_d06' => 'Luas Area Perizinan',
+            'zona_blok_pbp_d06' => 'Zona/Blok', 'provinsi_pbp_d06' => 'Provinsi',
+            'jumlah_tenaga_kerja_pbp_d06' => 'Jumlah Tenaga Kerja',
+            'nilai_investasi_pbp_d06' => 'Nilai Investasi', 'keterangan_pbp_d06' => 'Keterangan',
+            'tahun_d07' => 'Tahun', 'ada_sarana_prasarana_d07' => 'Ada Sarana dan Prasarana',
+            'nama_sarana_prasarana_d07' => 'Nama Sarana dan Prasarana', 'tahun_pembangunan_d07' => 'Tahun Pembangunan',
+            'luas_sarana_prasarana_d07' => 'Luas Sarana dan Prasarana',
+            'kondisi_sarana_prasarana_d07' => 'Kondisi Sarana dan Prasarana',
+            'nilai_investasi_sarana_prasarana_d07' => 'Nilai Investasi',
+            'sumber_dana_sarana_prasarana_d07' => 'Sumber Dana',
+            'longitude_sarana_prasarana_d07' => 'Longitude', 'latitude_sarana_prasarana_d07' => 'Latitude',
+            'zona_blok_sarana_prasarana_d07' => 'Zona/Blok', 'keterangan_sarana_prasarana_d07' => 'Keterangan',
+            'data_tersedia_d08' => 'Data Tersedia', 'odtwa_d08' => 'ODTWA',
+            'dipa_d08' => 'DIPA (Komponen Kegiatan Wisata Alam)',
+            'nilai_ekonomi_terdampak_d08' => 'Perkiraan Nilai Ekonomi Terdampak', 'keterangan_d08' => 'Keterangan',
+            'tahun_d09' => 'Tahun', 'kawasan_nama_d09' => 'Kawasan Konservasi',
+            'ada_potensi_air_d09' => 'Ada Potensi Air', 'sumber_air_d09' => 'Sumber Air',
+            'jenis_sumber_air_d09' => 'Jenis Sumber Air', 'debit_air_d09' => 'Debit Air',
+            'latitude_air_d09' => 'Latitude', 'longitude_air_d09' => 'Longitude', 'keterangan_air_d09' => 'Keterangan',
+            'data_tersedia_d_10' => 'Data Tersedia', 'data_tersedia_d_11' => 'Data Tersedia',
+            'data_tersedia_d_12' => 'Data Tersedia', 'data_tersedia_d_13' => 'Data Tersedia',
+            'data_tersedia_d_14' => 'Data Tersedia', 'data_tersedia_d_15' => 'Data Tersedia',
+            'data_tersedia_d_16' => 'Data Tersedia',
+            'zonasi_blok_d10' => 'Zona/Blok', 'bidang_seksi_pengelolaan_wilayah_d10' => 'Bidang/Seksi Pengelolaan Wilayah',
+            'jumlah_sumber_air_d10' => 'Jumlah Sumber Air', 'total_debit_air_d10' => 'Total Debit Air',
+            'luas_areal_pemanfaatan_d10' => 'Luas Areal Pemanfaatan', 'keterangan_d10' => 'Keterangan',
+            'sumber_air_d11' => 'Sumber Air', 'jenis_perizinan_d11' => 'Jenis Perizinan',
+            'nama_pemegang_izin_d11' => 'Nama Pemegang Izin', 'komersil_d11' => 'Status Komersial',
+            'no_surat_keputusan_d11' => 'Nomor Surat Keputusan', 'tanggal_sk_d11' => 'Tanggal SK',
+            'luas_areal_d11' => 'Luas Areal', 'kabupaten_d11' => 'Kabupaten/Kota',
+            'kecamatan_d11' => 'Kecamatan', 'kelurahan_d11' => 'Kelurahan/Desa',
+            'jumlah_kk_d11' => 'Jumlah KK yang Dilayani', 'jumlah_tenaga_kerja_d11' => 'Jumlah Tenaga Kerja',
+            'nilai_investasi_d11' => 'Nilai Investasi', 'keterangan_d11' => 'Keterangan',
+            'potensi_karbon_per_ha_d12' => 'Potensi Karbon per Ha', 'total_stok_karbon_d12' => 'Total Stok Karbon',
+            'nilai_flora_d12' => 'Nilai Flora', 'nilai_satwa_d12' => 'Nilai Satwa',
+            'nilai_jasa_air_d12' => 'Nilai Jasa Air', 'nilai_jasa_wisata_alam_d12' => 'Nilai Jasa Wisata Alam',
+            'nilai_jasa_lingkungan_total_d12' => 'Nilai Jasa Lingkungan Total',
+            'nilai_kualitas_karbon_d12' => 'Nilai Kualitas Karbon', 'nilai_ekosistem_d12' => 'Nilai Ekosistem',
+            'keterangan_d12' => 'Keterangan', 'nama_manifestasi_d13' => 'Nama Manifestasi',
+            'jenis_manifestasi_d13' => 'Jenis Manifestasi', 'longitude_manifestasi_d13' => 'Longitude',
+            'latitude_manifestasi_d13' => 'Latitude', 'zona_blok_manifestasi_d13' => 'Zona/Blok',
+            'keterangan_d13' => 'Keterangan', 'jenis_perizinan_d14' => 'Jenis Perizinan Berusaha',
+            'nama_pemegang_izin_d14' => 'Nama Pemegang Izin', 'nib_d14' => 'Nomor Induk Berusaha (NIB)',
+            'nomor_perizinan_d14' => 'Nomor Perizinan', 'tanggal_perizinan_d14' => 'Tanggal Perizinan',
+            'luas_area_perizinan_d14' => 'Luas Area Perizinan', 'zona_blok_d14' => 'Zona/Blok',
+            'sptn_skw_d14' => 'SPTN/SKW', 'nama_wilayah_kerja_d14' => 'Nama Wilayah Kerja',
+            'status_wilayah_kerja_d14' => 'Status Wilayah Kerja', 'luas_wilayah_kerja_d14' => 'Luas Wilayah Kerja',
+            'kapasitas_terbangkit_d14' => 'Kapasitas Terbangkit', 'keterangan_d14' => 'Keterangan',
+            'jenis_kecelakaan_d15' => 'Jenis Kecelakaan', 'lokasi_kejadian_d15' => 'Lokasi Kejadian',
+            'korban_dalam_negeri_d15' => 'Korban Dalam Negeri', 'korban_luar_negeri_d15' => 'Korban Luar Negeri',
+            'keterangan_d15' => 'Keterangan', 'periode_semester_d16' => 'Periode Semester',
+            'satuan_kerja_d16' => 'Satuan Kerja', 'jenis_publikasi_d16' => 'Jenis Publikasi',
+            'judul_publikasi_d16' => 'Judul Publikasi', 'penyelenggara_kegiatan_d16' => 'Penyelenggara Kegiatan',
+            'sumber_pembiayaan_d16' => 'Sumber Pembiayaan', 'keterangan_d16' => 'Keterangan',
+            'penelitian_dalam_negeri' => 'Penelitian dan Pengembangan - Dalam Negeri',
+            'penelitian_luar_negeri' => 'Penelitian dan Pengembangan - Luar Negeri',
+            'pendidikan_dalam_negeri' => 'Pendidikan dan Ilmu Pengetahuan - Dalam Negeri',
+            'pendidikan_luar_negeri' => 'Pendidikan dan Ilmu Pengetahuan - Luar Negeri',
+            'foto_video_dalam_negeri' => 'Pengambilan Foto dan Video - Dalam Negeri',
+            'foto_video_luar_negeri' => 'Pengambilan Foto dan Video - Luar Negeri',
+            'wisata_alam_dalam_negeri' => 'Wisata Alam - Dalam Negeri',
+            'wisata_alam_luar_negeri' => 'Wisata Alam - Luar Negeri',
+            'lain_lain_dalam_negeri' => 'Lain-lain - Dalam Negeri',
+            'lain_lain_luar_negeri' => 'Lain-lain - Luar Negeri',
             'tahun_f07' => 'Tahun', 'periode_semester_f07' => 'Periode Semester',
             'satuan_kerja_f07' => 'Eselon II / UPT', 'perjanjian_baru_f07' => 'Perjanjian Kerja Sama Baru',
             'jenis_dokumen_f07' => 'Jenis Dokumen Kerja Sama', 'nama_mitra_f07' => 'Nama Mitra Kerja Sama',
@@ -1072,6 +1282,9 @@ class KonservasiController extends Controller
         $request->validate($this->uploadValidationRules($uploadFields), $this->uploadValidationMessages());
         $yearFields = [
             'A.01' => 'tahun',
+            'D.01' => 'tahun',
+            'D.02' => 'tahun',
+            'D.03' => 'tahun',
             'A.02' => 'tahun_rpjp',
             'A.03' => 'tahun_monitoring',
             'A.04' => 'tahun_evaluasi',
@@ -1103,6 +1316,12 @@ class KonservasiController extends Controller
             'C.16' => 'tahun_c16',
             'C.17' => 'tahun_c17',
         ];
+        foreach (range(4, 16) as $subNumber) {
+            $formattedNumber = str_pad((string) $subNumber, 2, '0', STR_PAD_LEFT);
+            $yearFields['D.' . $formattedNumber] = $subNumber >= 10
+                ? 'tahun_d_' . $formattedNumber
+                : 'tahun_d' . $formattedNumber;
+        }
         $tahun = $request->input($yearFields[$subBidang->kode_sub] ?? '', date('Y'));
 
         $jumlah = match ($subBidang->kode_sub) {
@@ -1225,15 +1444,20 @@ class KonservasiController extends Controller
         $payload = [
             'sub_bidang_id' => $request->sub_bidang_id,
             'tahun'         => $tahun,
-            'bulan'         => $request->input('bulan_c17')
-                ?? $request->input('bulan_c16')
-                ?? $request->input('bulan_c15')
-                ?? $request->input('bulan_c14')
-                ?? $request->input('bulan_c12')
-                ?? $request->input('bulan_c11')
-                ?? $request->input('bulan_c01')
-                ?? $request->input('periode_bulan_f08')
-                ?? $request->bulan,
+            'bulan'         => match ($subBidang->kode_sub) {
+                'D.01' => $request->input('bulan_d01'),
+                'D.02' => $request->input('bulan_d02'),
+                'D.08' => $request->input('periode_bulan_d08'),
+                'F.08' => $request->input('periode_bulan_f08'),
+                default => $request->input('bulan_c17')
+                    ?? $request->input('bulan_c16')
+                    ?? $request->input('bulan_c15')
+                    ?? $request->input('bulan_c14')
+                    ?? $request->input('bulan_c12')
+                    ?? $request->input('bulan_c11')
+                    ?? $request->input('bulan_c01')
+                    ?? $request->bulan,
+            },
             'latitude'      => $latitude,
             'longitude'     => $longitude,
             'jumlah'        => $jumlah,
@@ -1645,8 +1869,12 @@ class KonservasiController extends Controller
         $yearFields = [
             'A.01' => 'tahun', 'A.02' => 'tahun_rpjp', 'A.03' => 'tahun_monitoring',
             'A.04' => 'tahun_evaluasi', 'A.05' => 'tahun_ekosistem', 'A.06' => 'tahun_zonasi',
+            'D.01' => 'tahun', 'D.02' => 'tahun', 'D.03' => 'tahun',
             'B.01' => 'tahun_b01', 'B.02' => 'tahun_b02', 'F.01' => 'tahun_f01', 'F.02' => 'tahun_f02', 'F.03' => 'tahun_f03', 'F.04' => 'tahun_f04', 'F.05' => 'tahun_f05', 'F.06' => 'tahun_f06', 'F.07' => 'tahun_f07',
-            'F.08' => 'tahun_f08',
+            'F.08' => 'tahun_f08', 'D.04' => 'tahun_d04', 'D.05' => 'tahun_d05', 'D.06' => 'tahun_d06',
+            'D.07' => 'tahun_d07', 'D.08' => 'tahun_d08', 'D.09' => 'tahun_d09',
+            'D.10' => 'tahun_d_10', 'D.11' => 'tahun_d_11', 'D.12' => 'tahun_d_12',
+            'D.13' => 'tahun_d_13', 'D.14' => 'tahun_d_14', 'D.15' => 'tahun_d_15', 'D.16' => 'tahun_d_16',
         ];
         $yearField = $yearFields[$subBidang->kode_sub] ?? null;
         $year = $yearField && $request->filled($yearField)
@@ -1708,9 +1936,13 @@ class KonservasiController extends Controller
         $item->update([
             'sub_bidang_id' => $subBidang->id,
             'tahun'         => $year,
-            'bulan'         => $subBidang->kode_sub === 'F.08'
-                ? $request->input('periode_bulan_f08', $item->bulan)
-                : $request->input('bulan', $item->bulan),
+            'bulan'         => match ($subBidang->kode_sub) {
+                'D.01' => $request->input('bulan_d01', $item->bulan),
+                'D.02' => $request->input('bulan_d02', $item->bulan),
+                'D.08' => $request->input('periode_bulan_d08', $item->bulan),
+                'F.08' => $request->input('periode_bulan_f08', $item->bulan),
+                default => $request->input('bulan', $item->bulan),
+            },
             'latitude'      => $request->input('latitude', $item->latitude),
             'longitude'     => $request->input('longitude', $item->longitude),
             'jumlah'        => $jumlah,
