@@ -566,8 +566,8 @@
         <div class="g-overlay"><div><span class="tag">SATWA DILINDUNGI</span><h4>Kuskus Beruang Sulawesi</h4><p>Ailurops ursinus</p></div></div>
       </div>
       <div class="g-item" style="height:220px;">
-        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Macrogalidia%20musschenbroekii.jpg" alt="Musang Sulawesi, satwa dilindungi">
-        <div class="g-overlay"><div><span class="tag">SATWA DILINDUNGI</span><h4>Musang Sulawesi</h4><p>Macrogalidia musschenbroekii</p></div></div>
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/%28Rhyticeros%20cassidix%29%20endemic%20to%20Sulawesi.jpg" alt="Rangkong Sulawesi, satwa dilindungi">
+        <div class="g-overlay"><div><span class="tag">SATWA DILINDUNGI</span><h4>Rangkong Sulawesi</h4><p>Rhyticeros cassidix</p></div></div>
       </div>
       <div class="g-item" style="height:220px;">
         <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Saltwater%20Crocodile%20(Crocodylus%20porosus)%20(10106331165).jpg" alt="Buaya, satwa dilindungi Sulawesi">
@@ -593,7 +593,7 @@
     <div class="cta-band">
       <span class="eyebrow"><span class="dot"></span> Balai KSDA Sulawesi Tengah</span>
       <h2>Siap mengelola data konservasi dengan lebih rapi?</h2>
-      <p>Masuk ke SINTUVU untuk mulai mencatat, memantau, dan melaporkan data kawasan serta satwa endemik Sulawesi Tengah.</p>
+      <p>SINTUVU membantu pencatatan, pemantauan, dan pelaporan data kawasan serta satwa endemik Sulawesi Tengah.</p>
       <div class="cta-btns">
         @auth
           <a href="{{ route('konservasi.dashboard') }}" class="btn btn-solid">Ke dashboard</a>

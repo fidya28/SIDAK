@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Alpine.js untuk Modal Pop-Up -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    @include('components.theme-assets')
 </head>
 <body class="bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative" x-data="{
     openModal: false,
@@ -52,7 +53,7 @@
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-50 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-11 h-11 rounded-xl bg-forest-700/10 border border-forest-700/20 flex items-center justify-center p-1.5 shadow-xs overflow-hidden">
+                <div class="w-[42px] h-[42px] rounded-full bg-white border border-slate-200 flex items-center justify-center p-[3px] shadow-sm overflow-hidden">
                     <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SINTUVU" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col">
@@ -67,7 +68,7 @@
                 <a href="{{ route('konservasi.peta') }}" class="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-white/50 transition">GIS</a>
             </nav>
             <div class="flex items-center space-x-4">
-                <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Sistem Aktif</span>
+                <span data-system-status class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Sistem Aktif</span>
                 <div class="flex items-center space-x-2.5 border-l pl-4 border-slate-200">
                     <div class="w-9 h-9 rounded-full bg-forest-700 text-white flex items-center justify-center font-bold text-xs shadow-sm uppercase">{{ strtoupper(substr(Auth::user()->name ?? 'User', 0, 2)) }}</div>
                     <div class="hidden sm:block text-left"><p class="text-xs font-bold text-slate-800 leading-tight">{{ Auth::user()->name ?? 'Pengguna' }}</p><p class="text-[10px] text-slate-500">{{ Auth::user()->role ?? 'Operator' }}</p></div>
