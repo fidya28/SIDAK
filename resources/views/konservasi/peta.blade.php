@@ -23,6 +23,7 @@
     </script>
     <!-- FontAwesome untuk Ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/sintuvu-ui.css') }}">
     
     <!-- Leaflet GIS Map CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -46,7 +47,7 @@
         .gis-popup dd a { color: #047857; font-weight: 700; }
     </style>
 </head>
-<body class="bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
+<body class="sintuvu-polished bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
 
     <!-- BACKGROUND GLOBAL KAWASAN KONSERVASI DENGAN OPASITAS TIPIS -->
     <div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">

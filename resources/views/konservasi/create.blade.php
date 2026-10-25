@@ -31,8 +31,9 @@
     </script>
     <!-- FontAwesome untuk Ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/sintuvu-ui.css') }}">
 </head>
-<body class="bg-slate-100/90 text-slate-800 antialiased min-h-screen flex flex-col relative" style="font-family: 'Plus Jakarta Sans', sans-serif;">
+<body class="sintuvu-polished bg-slate-100/90 text-slate-800 antialiased min-h-screen flex flex-col relative" style="font-family: 'Plus Jakarta Sans', sans-serif;">
 
     @php
         // Array Daftar 18 Kawasan Konservasi BKSDA Sulteng

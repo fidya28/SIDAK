@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>SINTUVU — Sistem Informasi dan Data Konservasi Terpadu Sulawesi Tengah</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   :root{
     --forest-950:#07160f;
@@ -323,6 +324,15 @@
   .foot-col h5{ font-size:12.5px; text-transform:uppercase; letter-spacing:.04em; color:rgba(246,244,236,0.75); margin-bottom:14px; }
   .foot-col a{ display:block; font-size:13.5px; color:rgba(246,244,236,0.55); margin-bottom:10px; }
   .foot-col a:hover{ color:var(--leaf-300); }
+  .foot-info-title{ padding-bottom:12px; border-bottom:1px solid var(--line-dark); margin-bottom:16px !important; }
+  .foot-info-list{ display:grid; gap:12px; }
+  .foot-info-item{ display:grid; grid-template-columns:20px minmax(0,1fr); align-items:start; gap:10px; }
+  .foot-info-icon{ color:#b7d2c5; font-size:17px; line-height:1; padding-top:2px; }
+  .foot-info-item h6{ margin:0 0 4px; color:var(--cream); font-size:14px; font-weight:700; }
+  .foot-info-item p,
+  .foot-info-item a{ margin:0; color:rgba(246,244,236,0.72); font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+  .foot-info-item a:hover{ color:var(--leaf-300); }
+  .foot-info-item .foot-info-phone{ display:block; margin-bottom:3px; }
   .foot-bottom{ display:flex; justify-content:space-between; align-items:center; padding-top:22px; font-size:12.5px; flex-wrap:wrap; gap:10px; }
 
   @media (max-width: 920px){
@@ -624,10 +634,39 @@
         <a href="#satwa">Satwa dilindungi</a>
       </div>
       <div class="foot-col">
-        <h5>Instansi</h5>
-        <a href="#">Kementerian Kehutanan</a>
-        <a href="#">Balai KSDA Sulawesi Tengah</a>
-        <a href="#">Hubungi kami</a>
+        <h5 class="foot-info-title">Informasi Instansi</h5>
+        <div class="foot-info-list">
+          <div class="foot-info-item">
+            <i class="fa-solid fa-landmark foot-info-icon" aria-hidden="true"></i>
+            <div><h6>Instansi</h6><p>Kementerian Kehutanan</p></div>
+          </div>
+          <div class="foot-info-item">
+            <i class="fa-solid fa-location-dot foot-info-icon" aria-hidden="true"></i>
+            <div><h6>Alamat Kantor</h6><p>Jl. Prof. Moh. Yamin No. 19, Palu, Sulawesi Tengah 94111</p></div>
+          </div>
+          <div class="foot-info-item">
+            <i class="fa-solid fa-phone foot-info-icon" aria-hidden="true"></i>
+            <div>
+              <h6>Call Center</h6>
+              <a class="foot-info-phone" href="tel:+6281145211717">0811-4521-1717</a>
+              <a class="foot-info-phone" href="tel:+6282292130780">0822-9213-0780</a>
+            </div>
+          </div>
+          <div class="foot-info-item">
+            <i class="fa-brands fa-instagram foot-info-icon" aria-hidden="true"></i>
+            <div>
+              <h6>Instagram</h6>
+              <a href="https://www.instagram.com/bksda_sulteng/" target="_blank" rel="noopener noreferrer">BKSDA Sulawesi Tengah</a>
+            </div>
+          </div>
+          <div class="foot-info-item">
+            <i class="fa-brands fa-facebook-f foot-info-icon" aria-hidden="true"></i>
+            <div>
+              <h6>Facebook</h6>
+              <a href="https://www.facebook.com/BKSDASULTENG/" target="_blank" rel="noopener noreferrer">BKSDA Sulawesi Tengah</a>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="foot-col">
         <h5>Bantuan</h5>

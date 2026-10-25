@@ -1,0 +1,115 @@
+body.sintuvu-polished {
+    background-color: #f3f7f4;
+    background-image:
+        radial-gradient(ellipse at 8% 0%, rgba(16, 185, 129, 0.1), transparent 34rem),
+        radial-gradient(ellipse at 94% 12%, rgba(234, 179, 8, 0.08), transparent 28rem);
+    color: #1e293b;
+}
+
+body.sintuvu-polished header {
+    background-color: rgba(255, 255, 255, 0.94);
+    border-color: rgba(15, 118, 85, 0.12);
+    box-shadow: 0 8px 24px -20px rgba(15, 23, 42, 0.45);
+}
+
+body.sintuvu-polished main > div[class*="rounded-2xl"][class*="bg-white"],
+body.sintuvu-polished main > section[class*="rounded-2xl"][class*="bg-white"],
+body.sintuvu-polished main div[class*="rounded-2xl"][class*="bg-white/"] {
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: 0 14px 34px -26px rgba(15, 23, 42, 0.4);
+}
+
+body.sintuvu-polished main > div[class*="rounded-2xl"][class*="bg-white"],
+body.sintuvu-polished main > section[class*="rounded-2xl"][class*="bg-white"] {
+    border-top: 3px solid #34a779;
+}
+
+body.sintuvu-polished main > div.grid > div[class*="rounded-2xl"][class*="bg-white"] {
+    border-top: 3px solid #10a66a;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+body.sintuvu-polished main > div.grid > div[class*="rounded-2xl"][class*="bg-white"]:nth-child(3n + 2) {
+    border-top-color: #eab84b;
+}
+
+body.sintuvu-polished main > div.grid > div[class*="rounded-2xl"][class*="bg-white"]:nth-child(3n) {
+    border-top-color: #38a3c7;
+}
+
+body.sintuvu-polished main > div.grid > div[class*="rounded-2xl"][class*="bg-white"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 38px -25px rgba(15, 23, 42, 0.38);
+}
+
+body.sintuvu-polished main h2,
+body.sintuvu-polished main h3 {
+    letter-spacing: -0.025em;
+}
+
+body.sintuvu-polished main > div[class*="rounded-2xl"][class*="bg-white"] h2,
+body.sintuvu-polished main > div[class*="rounded-2xl"][class*="bg-white"] h3,
+body.sintuvu-polished main > section[class*="rounded-2xl"][class*="bg-white"] h2,
+body.sintuvu-polished main > section[class*="rounded-2xl"][class*="bg-white"] h3 {
+    color: #123f2d;
+}
+
+body.sintuvu-polished table thead {
+    background: linear-gradient(100deg, #e7f5ec, #f1f8f1 58%, #fff8e7);
+}
+
+body.sintuvu-polished table thead th {
+    color: #14532d;
+    border-color: rgba(21, 128, 61, 0.12);
+}
+
+body.sintuvu-polished input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body.sintuvu-polished select,
+body.sintuvu-polished textarea {
+    border-radius: 0.8rem;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+body.sintuvu-polished input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+body.sintuvu-polished select:focus,
+body.sintuvu-polished textarea:focus {
+    border-color: #34a779;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+    outline: none;
+}
+
+body.sintuvu-polished button,
+body.sintuvu-polished a[class*="rounded-xl"],
+body.sintuvu-polished a[class*="rounded-lg"] {
+    transition-duration: 180ms;
+}
+
+body.sintuvu-polished main button[type="submit"]:hover,
+body.sintuvu-polished main a[class*="bg-amber-400"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.5);
+}
+
+body.sintuvu-polished table tbody tr {
+    transition: background-color 140ms ease;
+}
+
+body.sintuvu-polished table tbody tr:hover {
+    background-color: rgba(16, 185, 129, 0.035);
+}
+
+@media (max-width: 640px) {
+    body.sintuvu-polished main {
+        padding-top: 1.25rem;
+        padding-bottom: 1.75rem;
+    }
+
+    body.sintuvu-polished main [class*="p-8"] {
+        padding: 1.25rem;
+    }
+
+    body.sintuvu-polished #map {
+        height: 58vh;
+        min-height: 360px;
+    }
+}

@@ -7,9 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/sintuvu-ui.css') }}">
     <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body class="bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
+<body class="sintuvu-polished bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-50 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="{{ route('konservasi.dashboard') }}" class="flex items-center gap-3">

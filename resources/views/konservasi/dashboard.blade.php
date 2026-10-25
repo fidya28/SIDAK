@@ -23,10 +23,11 @@
     </script>
     <!-- FontAwesome untuk Ikon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset('css/sintuvu-ui.css') }}">
     <!-- Chart.js untuk Grafik Dinamis -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
+<body class="sintuvu-polished bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
 
     <!-- BACKGROUND GLOBAL KAWASAN KONSERVASI DENGAN OPASITAS TIPIS -->
     <div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
@@ -87,10 +88,10 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
         <!-- HERO BANNER -->
-        <div class="relative rounded-2xl overflow-hidden shadow-xl bg-slate-900 text-white min-h-[240px] flex flex-col justify-between p-8 border border-slate-800">
+        <div class="relative rounded-2xl overflow-hidden shadow-xl bg-emerald-950/20 text-white min-h-[240px] flex flex-col justify-between p-8 border border-white/30">
             <div class="absolute inset-0 z-0">
-                <img src="{{ asset('images/satwa-endemik-sulteng.jpg') }}" alt="Satwa Endemik & Kawasan Konservasi Sulawesi Tengah" class="w-full h-full object-cover opacity-50 transform hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?q=80&w=1600&auto=format&fit=crop'">
-                <div class="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-900/80 to-slate-950/40"></div>
+                <img src="{{ asset('images/wera-login.jpg') }}" alt="Kawasan Wera" class="w-full h-full object-cover opacity-100 transform hover:scale-105 transition duration-700" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?q=80&w=1600&auto=format&fit=crop'">
+                <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-black/10"></div>
             </div>
 
             <!-- Konten Banner -->
@@ -115,7 +116,7 @@
                     <span>Hak Akses: <strong class="text-white font-semibold">Petugas {{ Auth::user()->role ?? 'Operator' }} Terverifikasi</strong></span>
                 </div>
                 <div>
-                    <a href="{{ route('konservasi.create') }}" class="inline-flex items-center justify-center px-4.5 py-2.5 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 shadow-md transition">
+                    <a href="{{ route('konservasi.create') }}" class="inline-flex items-center justify-center px-4.5 py-2.5 rounded-xl text-xs font-bold text-emerald-950 bg-amber-400 hover:bg-amber-300 shadow-md transition">
                         <i class="fa-solid fa-plus mr-1.5"></i> Tambah Data Konservasi
                     </a>
                 </div>

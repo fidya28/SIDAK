@@ -25,8 +25,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Alpine.js untuk Modal Pop-Up -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="{{ asset('css/sintuvu-ui.css') }}">
 </head>
-<body class="bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative" x-data="{
+<body class="sintuvu-polished bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative" x-data="{
     openModal: false,
     modalContent: '',
     modalTitle: '',
@@ -42,11 +43,8 @@
     }
 }">
 
-    <!-- BACKGROUND GLOBAL KAWASAN KONSERVASI -->
-    <div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?q=80&w=1920&auto=format&fit=crop" alt="Background Konservasi" class="w-full h-full object-cover opacity-15">
-        <div class="absolute inset-0 bg-slate-100/75 backdrop-blur-[2px]"></div>
-    </div>
+    <!-- LATAR HALAMAN PUTIH POLOS -->
+    <div class="fixed inset-0 pointer-events-none z-[-1] bg-white"></div>
 
     <!-- NAVBAR UTAMA -->
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-50 shadow-xs">
