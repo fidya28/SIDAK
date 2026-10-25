@@ -99,8 +99,9 @@
   .switch-link a{ color:var(--forest-600); font-weight:700; text-decoration:none; }
   .switch-link a:hover{ text-decoration:underline; }
 </style>
+@include('components.theme-assets')
 </head>
-<body>
+<body class="auth-page" data-hide-theme-toggle="{{ request()->routeIs('login', 'register') ? 'true' : 'false' }}">
 
   <div class="auth-popup">
     <a href="{{ route('landing') }}" class="popup-close" aria-label="Tutup dan kembali ke beranda">

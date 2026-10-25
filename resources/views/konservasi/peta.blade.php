@@ -46,6 +46,7 @@
         .gis-popup dd { margin: 0; color: #0f172a; overflow-wrap: anywhere; white-space: pre-wrap; }
         .gis-popup dd a { color: #047857; font-weight: 700; }
     </style>
+    @include('components.theme-assets')
 </head>
 <body class="sintuvu-polished bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
 
@@ -61,7 +62,7 @@
             
             <!-- Logo & Title Instansi -->
             <div class="flex items-center space-x-3">
-                <div class="w-11 h-11 rounded-xl bg-forest-700/10 border border-forest-700/20 flex items-center justify-center p-1.5 shadow-xs overflow-hidden">
+                <div class="w-[42px] h-[42px] rounded-full bg-white border border-slate-200 flex items-center justify-center p-[3px] shadow-sm overflow-hidden">
                     <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SINTUVU" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='https://via.placeholder.com/50?text=SINTUVU';">
                 </div>
                 <div class="flex flex-col">
@@ -80,7 +81,7 @@
 
             <!-- Status & User Profile (Dinamis) -->
             <div class="flex items-center space-x-4">
-                <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span data-system-status class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                     <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Sistem Aktif
                 </span>
                 <div class="flex items-center space-x-2.5 border-l pl-4 border-slate-200">

@@ -9,12 +9,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/sintuvu-ui.css') }}">
     <style>[x-cloak] { display: none !important; }</style>
+    @include('components.theme-assets')
 </head>
 <body class="sintuvu-polished bg-slate-100/90 font-sans text-slate-800 antialiased min-h-screen relative">
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-50 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="{{ route('konservasi.dashboard') }}" class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-xl bg-emerald-700/10 border border-emerald-700/20 flex items-center justify-center p-1.5 shadow-xs overflow-hidden">
+                <div class="w-[42px] h-[42px] rounded-full bg-white border border-slate-200 flex items-center justify-center p-[3px] shadow-sm overflow-hidden">
                     <img src="{{ asset('images/logo-icon.png') }}" alt="Logo SINTUVU" class="w-full h-full object-contain">
                 </div>
                 <div class="flex flex-col">

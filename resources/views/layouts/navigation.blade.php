@@ -6,7 +6,7 @@
                 <!-- Logo SINTUVU BKSDA -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ Route::has('konservasi.dashboard') ? route('konservasi.dashboard') : '#' }}" class="flex items-center gap-3">
-                        <img src="{{ asset('images/logo-bksda.jpeg') }}" alt="Logo BKSDA" class="h-9 w-auto object-contain rounded-md" onerror="this.src='https://via.placeholder.com/40?text=BKSDA'">
+                        <img src="{{ asset('images/logo-icon.png') }}" alt="Logo BKSDA" class="w-[42px] h-[42px] object-contain rounded-full border border-slate-200 bg-white p-[3px] shadow-sm">
                         <div class="hidden md:block">
                             <span class="font-extrabold text-sm text-slate-800 tracking-wide block leading-none">SINTUVU</span>
                             <span class="text-[10px] font-bold text-emerald-700 tracking-wider">SULAWESI TENGAH</span>
